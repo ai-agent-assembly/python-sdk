@@ -48,7 +48,17 @@
      2. Take the dropdown out of flow with viewport-gutter `position: fixed`, so
         it can't reach either edge and never contributes to page scrollWidth. */
 @media (max-width: 76.1875em) {
-  .md-version { max-width: calc(100vw - 4rem); overflow: hidden; }
+  .md-header__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  .md-header__title { min-width: 0; }
+  .md-version {
+    flex: 0 1 min(12rem, calc(100vw - 10rem));
+    max-width: min(12rem, calc(100vw - 10rem));
+    min-width: 0;
+    overflow: hidden;
+  }
   .md-version__current { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
   .md-version__list {
     position: fixed;
@@ -59,6 +69,47 @@
     width: auto;
     overflow-x: auto;
   }
+}
+
+/* AAASM-6100: the initial Material consent notice is informative, not a reason
+   to make a technical article unreadable. Keep its native form, choices and
+   storage behavior intact while presenting it as a compact, non-modal surface.
+   The overlay is deliberately removed only visually and from hit testing; the
+   visible form remains fully interactive and its settings disclosure is native. */
+.md-consent__overlay {
+  backdrop-filter: none;
+  background: transparent;
+  pointer-events: none;
+}
+.md-consent__inner {
+  animation: none;
+  bottom: 1rem;
+  left: 50%;
+  max-height: calc(100dvh - 2rem);
+  max-width: 44rem;
+  transform: translateX(-50%);
+  width: calc(100vw - 2rem);
+}
+.md-consent__controls {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.md-typeset .md-consent__controls .md-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  margin: 0;
+  min-height: 2.75rem;
+  text-align: center;
+  width: 100%;
+}
+.md-typeset .md-consent__controls .md-button:last-child {
+  grid-column: 1 / -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-consent__overlay,
+  .md-consent__inner { animation: none; transition: none; }
 }
 
 /* AAASM-4560: content-tab titles (pymdownx.tabbed) render at body-text size by
