@@ -144,6 +144,58 @@ def test_alias_overlay_refuses_a_mike_symlink(tmp_path: Path) -> None:
     assert "refusing frozen-tree mutation" in result.stderr
 
 
+def test_alias_overlay_refuses_nested_symlink_or_unsafe_manifest_target(
+    tmp_path: Path,
+) -> None:
+    """Neither a nested link nor a path-like version may escape an alias copy."""
+    site = tmp_path / "site"
+    alias = site / "stable"
+    alias.mkdir(parents=True)
+    (alias / "index.html").write_text("<html><head></head><body>alias</body></html>")
+    (alias / "linked.html").symlink_to(alias / "index.html")
+    (site / "versions.json").write_text(
+        json.dumps([{"version": "v0.0.1", "aliases": ["stable"]}]),
+    )
+
+    nested_link = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci/apply_alias_overlay.py",
+            "--site-root",
+            str(site),
+            "--css",
+            "docs/stylesheets/aaasm-alias-overlay.css",
+            "--javascript",
+            "docs/javascripts/consent-settings-keyboard.js",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert nested_link.returncode != 0
+    assert "contains symlinked output" in nested_link.stderr
+
+    (alias / "linked.html").unlink()
+    (site / "versions.json").write_text(
+        json.dumps([{"version": "../frozen", "aliases": ["stable"]}]),
+    )
+    unsafe_target = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci/apply_alias_overlay.py",
+            "--site-root",
+            str(site),
+            "--css",
+            "docs/stylesheets/aaasm-alias-overlay.css",
+            "--javascript",
+            "docs/javascripts/consent-settings-keyboard.js",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert unsafe_target.returncode != 0
+    assert "unsafe version directory" in unsafe_target.stderr
+
+
 def test_alias_publisher_materialises_only_moving_aliases_before_publishing() -> None:
     """The release hook keeps Mike metadata and frozen snapshots protected."""
     publisher = Path("scripts/ci/publish-moving-alias-overlay.sh").read_text()
@@ -154,4 +206,7 @@ def test_alias_publisher_materialises_only_moving_aliases_before_publishing() ->
     assert 'git show "${PAGES_REMOTE}/${PAGES_BRANCH}:versions.json"' in publisher
     assert "cmp -s" in publisher
     assert 'git rev-parse "${PAGES_BRANCH}:${version}"' in publisher
-    assert 'git push "${PAGES_REMOTE}" "${PAGES_BRANCH}:${PAGES_BRANCH}"' in publisher
+    assert 'git worktree add --detach "${OVERLAY_WORKTREE}" "${PAGES_BRANCH}"' in publisher
+    assert publisher.rindex('push "${PAGES_REMOTE}" "HEAD:${PAGES_BRANCH}"') > publisher.index(
+        'git worktree add --detach "${OVERLAY_WORKTREE}" "${PAGES_BRANCH}"',
+    )

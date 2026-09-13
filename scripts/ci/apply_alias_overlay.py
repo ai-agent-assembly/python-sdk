@@ -60,6 +60,19 @@ def alias_targets(site_root: Path) -> dict[str, str]:
     return targets
 
 
+def validate_version_path(version: str) -> None:
+    """Reject a manifest value that cannot be a single published directory."""
+    candidate = Path(version)
+    if (
+        not version
+        or "\x00" in version
+        or candidate.is_absolute()
+        or len(candidate.parts) != 1
+        or version in {".", ".."}
+    ):
+        raise ValueError(f"unsafe version directory in versions.json: {version!r}")
+
+
 def inject_asset(html: str, tag: str, marker: str, closing_tag: str) -> str:
     """Insert one marked asset tag once, retaining all publisher HTML."""
     if marker in html:
@@ -76,6 +89,11 @@ def overlay_alias(alias_dir: Path, css: Path, javascript: Path) -> int:
         raise ValueError(f"{alias_dir.name} is a symlink; refusing frozen-tree mutation")
     if not alias_dir.is_dir():
         raise ValueError(f"{alias_dir.name} must be a physical alias directory")
+    for path in alias_dir.rglob("*"):
+        if path.is_symlink():
+            raise ValueError(
+                f"{alias_dir.name} contains symlinked output {path.relative_to(alias_dir)}",
+            )
 
     css_target = alias_dir / "stylesheets" / CSS_NAME
     js_target = alias_dir / "javascripts" / JS_NAME
@@ -123,6 +141,8 @@ def main() -> None:
     args = parser.parse_args()
 
     targets = alias_targets(args.site_root)
+    for version in targets.values():
+        validate_version_path(version)
     if args.print_targets:
         for alias, version in targets.items():
             print(f"{alias}={version}")

@@ -89,11 +89,9 @@ for frozen in "${FROZEN_TREES[@]}"; do
         exit 1
     fi
 done
-git push "${PAGES_REMOTE}" "${PAGES_BRANCH}:${PAGES_BRANCH}"
-
-# Work on a detached gh-pages checkout so the source worktree remains pristine.
-git fetch "${PAGES_REMOTE}" "${PAGES_BRANCH}" --depth=1
-git worktree add --detach "${OVERLAY_WORKTREE}" "${PAGES_REMOTE}/${PAGES_BRANCH}"
+# Work on the validated local gh-pages ref, not the remote branch, so changing
+# the alias representation and applying assets become one published update.
+git worktree add --detach "${OVERLAY_WORKTREE}" "${PAGES_BRANCH}"
 
 python3 "${OVERLAY}" --site-root "${OVERLAY_WORKTREE}" --css "${CSS}" \
     --javascript "${JAVASCRIPT}"
