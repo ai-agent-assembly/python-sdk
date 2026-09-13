@@ -139,3 +139,25 @@
    them relative to the surrounding text so tab titles read as UI chrome, not
    as another line of body copy. */
 .tabbed-set > .tabbed-labels > label { font-size: 0.85em; }
+
+/* AAASM-6100 R1: at phone widths, preserve the SDK and Mike channel identity
+   instead of shortening both labels into ambiguous fragments. */
+@media (max-width: 37.5em) {
+  .md-header { height: auto; min-height: 4.8rem; }
+  .md-header__inner { align-items: center; flex-wrap: wrap; min-height: 2.4rem; }
+  .md-header__title { flex: 1 1 auto; }
+  .md-header__topic:first-child > .md-ellipsis { font-size: 0; overflow: visible; }
+  .md-header__topic:first-child > .md-ellipsis::after { content: "Python SDK"; font-size: 0.7rem; white-space: nowrap; }
+  .md-header__topic[data-md-component="header-topic"] { display: none; }
+  .md-version { flex: 1 0 100%; max-width: none; order: 10; overflow: visible; width: 100%; }
+  .md-version__current { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
+  .md-version__list { top: 4.8rem; }
+}
+
+/* Moving aliases can be older Material output. Keep their article readable
+   without changing any archived body content. */
+@media (max-width: 76.1875em) {
+  .md-content__inner { padding-inline: max(0.8rem, 16px); }
+  .md-typeset :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+  .md-typeset table { display: block; max-width: 100%; overflow-x: auto; }
+}

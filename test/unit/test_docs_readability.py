@@ -62,6 +62,18 @@ def test_compact_header_reserves_space_for_its_controls() -> None:
     assert "text-overflow: ellipsis" in css
     assert "calc(100vw - 9rem)" in css
     assert ".md-version__list" in css
+    assert 'content: "Python SDK"' in css
+    assert "@media (max-width: 37.5em)" in css
+    assert "white-space: normal" in css
+
+
+def test_alias_overlay_keeps_narrow_archives_readable() -> None:
+    css = Path("docs/stylesheets/aaasm-alias-overlay.css").read_text()
+
+    assert 'content: "Python SDK"' in css
+    assert "padding-inline: max(0.8rem, 16px)" in css
+    assert "overflow-wrap: anywhere" in css
+    assert "table { display: block" in css
 
 
 def test_alias_overlay_only_updates_physical_moving_aliases(tmp_path: Path) -> None:
