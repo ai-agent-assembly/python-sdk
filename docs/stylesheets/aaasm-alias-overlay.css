@@ -39,3 +39,8 @@
   .md-typeset :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
   .md-typeset table { display: block; max-width: 100%; overflow-x: auto; }
 }
+@media (max-width: 10em) {
+  html, body { overflow-x: clip; }
+  .md-sidebar--primary, .md-sidebar--primary .md-nav { max-width: 100vw; }
+  .md-sidebar--primary .md-nav__title, .md-sidebar--primary .md-nav__link { min-width: 0; overflow-wrap: anywhere; }
+}
