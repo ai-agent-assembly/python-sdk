@@ -24,14 +24,17 @@
 
 @media (max-width: 37.5em) {
   .md-header { height: auto; min-height: 4.8rem; }
-  .md-header__inner { align-items: center; flex-wrap: wrap; min-height: 2.4rem; }
-  .md-header__title { flex: 1 1 auto; }
-  .md-header__topic:first-child > .md-ellipsis { font-size: 0; overflow: visible; }
+  .md-header__inner { align-items: center; flex-wrap: wrap; height: auto; min-height: 2.4rem; }
+  /* Mike nests its version control inside the title. Flatten only layout
+     wrappers so the existing native control participates in the header rows. */
+  .md-header__title, .md-header__ellipsis,
+  .md-header__topic:first-child { display: contents; }
+  .md-header__topic:first-child > .md-ellipsis { display: block; flex: 1 1 auto; font-size: 0; overflow: visible; }
   .md-header__topic:first-child > .md-ellipsis::after { content: "Python SDK"; font-size: 0.7rem; white-space: nowrap; }
   .md-header__topic[data-md-component="header-topic"] { display: none; }
-  .md-version { flex: 1 0 100%; max-width: none; order: 10; overflow: visible; width: 100%; }
-  .md-version__current { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; }
-  .md-version__list { top: 4.8rem; }
+  .md-version { flex: 1 0 100%; height: auto; max-width: none; order: 10; overflow: visible; position: relative; width: 100%; }
+  .md-version__current { height: auto; line-height: 1.5; max-width: none; min-height: 2.4rem; overflow: visible; padding-block: 0.4rem; text-align: left; text-overflow: clip; white-space: normal; }
+  .md-version__list { left: 0; max-width: 100%; right: 0; top: 100%; width: 100%; }
 }
 
 @media (max-width: 76.1875em) {

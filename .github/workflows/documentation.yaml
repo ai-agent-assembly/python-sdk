@@ -128,6 +128,14 @@ jobs:
       - name: Validate docs readability regression
         run: uv run pytest test/unit/test_docs_readability.py -q
 
+      - name: Install Node for header event contract checks
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Validate native header keyboard contract
+        run: node --test scripts/ci/test_header_keyboard.mjs
+
   deploy_latest_documentation:
     name: Deploy latest documentation
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

@@ -54,3 +54,42 @@
     enableConsentSettingsKeyboard();
   }
 })();
+
+/* Preserve the native Material surfaces while giving their label triggers a
+ * complete keyboard contract. These checkboxes control UI only, not consent. */
+(function () {
+  function enableHeaderKeyboard() {
+    ["search", "drawer"].forEach(function (name) {
+      var toggle = document.getElementById("__" + name);
+      var trigger = document.querySelector('.md-header__button[for="__' + name + '"]');
+      if (!toggle || !trigger) return;
+      trigger.tabIndex = 0;
+      trigger.setAttribute("role", "button");
+      trigger.setAttribute("aria-label", name === "search" ? "Search" : "Open navigation");
+      trigger.setAttribute("aria-expanded", String(toggle.checked));
+      function sync() { trigger.setAttribute("aria-expanded", String(toggle.checked)); }
+      toggle.addEventListener("change", sync);
+      trigger.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        toggle.checked = !toggle.checked;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key !== "Escape" || event.defaultPrevented || !toggle.checked) return;
+        // Search is registered first and owns Escape when both surfaces are
+        // open; do not close the underlying drawer or steal its focus.
+        event.preventDefault();
+        toggle.checked = false;
+        toggle.dispatchEvent(new Event("change", { bubbles: true }));
+        // Material may blur its query field later in the same event turn.
+        requestAnimationFrame(function () {
+          if (!toggle.checked) trigger.focus({ preventScroll: true });
+        });
+      }, true);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", enableHeaderKeyboard, { once: true });
+  else enableHeaderKeyboard();
+})();
