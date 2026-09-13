@@ -48,8 +48,36 @@
      2. Take the dropdown out of flow with viewport-gutter `position: fixed`, so
         it can't reach either edge and never contributes to page scrollWidth. */
 @media (max-width: 76.1875em) {
-  .md-version { max-width: calc(100vw - 4rem); overflow: hidden; }
-  .md-version__current { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .md-header__inner {
+    min-width: 0;
+  }
+  .md-header__title { flex: 1 1 auto; min-width: 0; }
+  .md-header__topic:first-child {
+    align-items: center;
+    display: flex;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .md-header__topic:first-child > .md-ellipsis {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .md-version {
+    flex: 0 1 min(10rem, calc(100vw - 9rem));
+    max-width: min(10rem, calc(100vw - 9rem));
+    min-width: 0;
+    overflow: hidden;
+  }
+  .md-version__current {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .md-version__list {
     position: fixed;
     top: 2.4rem;               /* just below the 48px mobile header */
@@ -61,8 +89,84 @@
   }
 }
 
+/* AAASM-6100: the initial Material consent notice is informative, not a reason
+   to make a technical article unreadable. Keep its native form, choices and
+   storage behavior intact while presenting it as a compact, non-modal surface.
+   The overlay is deliberately removed only visually and from hit testing; the
+   visible form remains fully interactive and its settings disclosure is native. */
+.md-consent__overlay {
+  backdrop-filter: none;
+  background: transparent;
+  pointer-events: none;
+}
+.md-consent__inner {
+  animation: none;
+  bottom: 1rem;
+  left: 50%;
+  max-height: calc(100dvh - 2rem);
+  max-width: 44rem;
+  transform: translateX(-50%);
+  width: calc(100vw - 2rem);
+}
+.md-consent__controls {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.md-typeset .md-consent__controls .md-button {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  margin: 0;
+  min-height: 2.75rem;
+  text-align: center;
+  width: 100%;
+}
+.md-typeset .md-consent__controls .md-button:last-child {
+  grid-column: 1 / -1;
+}
+.md-typeset .md-consent__controls label[role="button"]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-consent__overlay,
+  .md-consent__inner { animation: none; transition: none; }
+}
+
 /* AAASM-4560: content-tab titles (pymdownx.tabbed) render at body-text size by
    default, making them compete visually with the prose they introduce. Shrink
    them relative to the surrounding text so tab titles read as UI chrome, not
    as another line of body copy. */
 .tabbed-set > .tabbed-labels > label { font-size: 0.85em; }
+
+/* AAASM-6100 R1: at phone widths, preserve the SDK and Mike channel identity
+   instead of shortening both labels into ambiguous fragments. */
+@media (max-width: 37.5em) {
+  .md-header { height: auto; min-height: 4.8rem; }
+  .md-header__inner { align-items: center; flex-wrap: wrap; height: auto; min-height: 2.4rem; }
+  /* Mike nests its version control inside the title. Flatten only layout
+     wrappers so the existing native control participates in the header rows. */
+  .md-header__title, .md-header__ellipsis,
+  .md-header__topic:first-child { display: contents; }
+  .md-header__topic:first-child > .md-ellipsis { display: block; flex: 1 1 auto; font-size: 0; overflow: visible; }
+  .md-header__topic:first-child > .md-ellipsis::after { content: "Python SDK"; font-size: 0.7rem; white-space: nowrap; }
+  .md-header__topic[data-md-component="header-topic"] { display: none; }
+  .md-version { flex: 1 0 100%; height: auto; max-width: none; order: 10; overflow: visible; position: relative; width: 100%; }
+  .md-version__current { height: auto; line-height: 1.5; max-width: none; min-height: 2.4rem; overflow: visible; padding-block: 0.4rem; text-align: left; text-overflow: clip; white-space: normal; }
+  .md-version__list { left: 0; max-width: 100%; right: 0; top: 100%; width: 100%; }
+}
+
+/* Moving aliases can be older Material output. Keep their article readable
+   without changing any archived body content. */
+@media (max-width: 76.1875em) {
+  .md-content__inner { padding-inline: max(0.8rem, 16px); }
+  .md-typeset :not(pre) > code { overflow-wrap: anywhere; word-break: break-word; }
+  .md-typeset table { display: block; max-width: 100%; overflow-x: auto; }
+}
+
+@media (max-width: 10em) {
+  html, body { overflow-x: clip; }
+  .md-sidebar--primary, .md-sidebar--primary .md-nav { max-width: 100vw; }
+  .md-sidebar--primary .md-nav__title, .md-sidebar--primary .md-nav__link { min-width: 0; overflow-wrap: anywhere; }
+}

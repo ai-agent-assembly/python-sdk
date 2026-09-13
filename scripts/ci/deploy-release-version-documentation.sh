@@ -161,5 +161,9 @@ mike set-default --push \
     --template "${PROJECT_ROOT}/scripts/ci/templates/mike-redirect-with-analytics.html" \
     "${DEFAULT_CHANNEL}"
 
+# Materialise only the selected moving aliases before adding the scoped UI
+# overlay. Concrete release directories and versions.json remain immutable.
+bash "${PROJECT_ROOT}/scripts/ci/publish-moving-alias-overlay.sh"
+
 echo "🍻 Release documentation deployed for ${RELEASE_TAG}: stable=${STABLE_VERSION:-(none)}," \
      "pre-release=${PRERELEASE_VERSION:-(hidden)}, default=${DEFAULT_CHANNEL}."

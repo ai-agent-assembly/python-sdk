@@ -4,17 +4,25 @@ on:
   push:
     branches:
       - "main"
+      - "integration"
     paths:
       # Doc — CI workflow + deploy scripts
       - ".github/workflows/documentation.yaml"
       - "scripts/ci/deploy-latest-version-documentation.sh"
       - "scripts/ci/deploy-release-version-documentation.sh"
+      - "scripts/ci/apply_alias_overlay.py"
+      - "scripts/ci/publish-moving-alias-overlay.sh"
+      - "scripts/ci/test_header_keyboard.mjs"
+      - "test/unit/test_docs_readability.py"
       # Doc — MkDocs config
       - "mkdocs.yml"
       # Doc — Markdown content
       - "docs/**/*.md"
       # Doc — theme overrides
       - "docs/_overrides/**"
+      # Doc — publisher-local reading and compact-header styles
+      - "docs/stylesheets/**"
+      - "docs/javascripts/**"
       # Python source code (mkdocstrings reads docstrings from agent_assembly/)
       - "agent_assembly/**/*.py"
       # Python project metadata (version is read from pyproject.toml)
@@ -25,9 +33,15 @@ on:
       - ".github/workflows/documentation.yaml"
       - "scripts/ci/deploy-latest-version-documentation.sh"
       - "scripts/ci/deploy-release-version-documentation.sh"
+      - "scripts/ci/apply_alias_overlay.py"
+      - "scripts/ci/publish-moving-alias-overlay.sh"
+      - "scripts/ci/test_header_keyboard.mjs"
+      - "test/unit/test_docs_readability.py"
       - "mkdocs.yml"
       - "docs/**/*.md"
       - "docs/_overrides/**"
+      - "docs/stylesheets/**"
+      - "docs/javascripts/**"
       - "agent_assembly/**/*.py"
       - "pyproject.toml"
   # Cut the frozen, versioned snapshot after a successful release run. The
@@ -78,13 +92,13 @@ permissions:
 # Allow one concurrent deployment so a fast-follow push doesn't race the
 # previous deploy on gh-pages.
 concurrency:
-  group: "pages-mkdocs"
+  group: "pages-mkdocs-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   build_documentation:
     name: Build documentation (PR, no deploy)
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history for mike + git-revision-date plugins)
@@ -115,9 +129,20 @@ jobs:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: uv run mkdocs build --strict
 
+      - name: Validate docs readability regression
+        run: uv run pytest test/unit/test_docs_readability.py -q
+
+      - name: Install Node for header event contract checks
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+
+      - name: Validate native header keyboard contract
+        run: node --test scripts/ci/test_header_keyboard.mjs
+
   deploy_latest_documentation:
     name: Deploy latest documentation
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write

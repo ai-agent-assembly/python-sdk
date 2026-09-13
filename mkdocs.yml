@@ -24,6 +24,10 @@ extra_css:
 # docs/_overrides/partials/source.html (AAASM-3785); see the file header.
 extra_javascript:
   - javascripts/source-facts-guard.js
+  # Material renders the consent settings label outside the sequential keyboard
+  # order. This adapter restores its native checkbox disclosure to keyboard use
+  # without changing consent values, persistence, or analytics behavior.
+  - javascripts/consent-settings-keyboard.js
   # Self-hosted mermaid runtime (AAASM-4320). Loading this file *before* the
   # theme's superfences integration wires up its mermaid custom fence prevents
   # mkdocs-material from injecting the third-party unpkg CDN copy at render
