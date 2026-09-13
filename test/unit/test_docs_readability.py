@@ -40,6 +40,8 @@ def test_consent_settings_adapter_only_restores_keyboard_access() -> None:
     assert 'label[for="__settings"]' in adapter
     assert "control.tabIndex = 0" in adapter
     assert 'event.key !== "Enter" && event.key !== " "' in adapter
+    assert "settings.click()" in adapter
+    assert "control.click()" not in adapter
     assert "localStorage" not in adapter
     assert "__md_set" not in adapter
     assert "gtag" not in adapter

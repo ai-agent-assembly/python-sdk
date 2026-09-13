@@ -25,7 +25,10 @@
         return;
       }
       event.preventDefault();
-      control.click();
+      // Activating the label programmatically does not consistently invoke
+      // its native label-to-checkbox default action. Click the existing
+      // checkbox instead, keeping Material's own change/state behavior.
+      settings.click();
       control.setAttribute("aria-expanded", String(settings.checked));
     });
 
