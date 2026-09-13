@@ -49,17 +49,35 @@
         it can't reach either edge and never contributes to page scrollWidth. */
 @media (max-width: 76.1875em) {
   .md-header__inner {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    min-width: 0;
   }
-  .md-header__title { min-width: 0; }
+  .md-header__title { flex: 1 1 auto; min-width: 0; }
+  .md-header__topic:first-child {
+    align-items: center;
+    display: flex;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .md-header__topic:first-child > .md-ellipsis {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .md-version {
-    flex: 0 1 min(12rem, calc(100vw - 10rem));
-    max-width: min(12rem, calc(100vw - 10rem));
+    flex: 0 1 min(10rem, calc(100vw - 9rem));
+    max-width: min(10rem, calc(100vw - 9rem));
     min-width: 0;
     overflow: hidden;
   }
-  .md-version__current { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .md-version__current {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .md-version__list {
     position: fixed;
     top: 2.4rem;               /* just below the 48px mobile header */

@@ -32,6 +32,9 @@ def test_compact_header_reserves_space_for_its_controls() -> None:
     css = Path("docs/stylesheets/aaasm-brand.css").read_text()
 
     assert ".md-header__inner" in css
-    assert "grid-template-columns: auto minmax(0, 1fr) auto auto" in css
-    assert "calc(100vw - 10rem)" in css
+    assert "grid-template-columns: auto minmax(0, 1fr) auto auto" not in css
+    assert "flex: 1 1 auto" in css
+    assert ".md-header__topic:first-child" in css
+    assert "text-overflow: ellipsis" in css
+    assert "calc(100vw - 9rem)" in css
     assert ".md-version__list" in css
