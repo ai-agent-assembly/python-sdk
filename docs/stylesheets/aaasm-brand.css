@@ -130,11 +130,14 @@
   outline-offset: 3px;
 }
 /* Pale dark-theme fills need dark ink in both rest and interaction states. */
+[data-md-color-scheme="default"] .md-consent__controls {
+  --md-primary-fg-color: #4f46e5;
+}
 [data-md-color-scheme="slate"] .md-consent__controls .md-button--primary,
 [data-md-color-scheme="slate"] .md-consent__controls .md-button:is(:hover, :focus) {
   color: #111827;
 }
-[data-md-color-scheme="slate"] .md-typeset .md-consent__controls .md-button:focus-visible {
+[data-md-color-scheme] .md-typeset .md-consent__controls .md-button:focus-visible {
   outline: 2px solid var(--md-accent-fg-color);
   outline-offset: 3px;
 }

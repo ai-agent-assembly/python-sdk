@@ -47,6 +47,9 @@ def test_dark_consent_fill_uses_readable_ink_in_current_and_alias_shells() -> No
         assert '[data-md-color-scheme="slate"] .md-consent__controls .md-button--primary,' in css
         assert '[data-md-color-scheme="slate"] .md-consent__controls .md-button:is(:hover, :focus)' in css
         assert "color: #111827;" in css
+        assert '[data-md-color-scheme="default"] .md-consent__controls {' in css
+        assert "--md-primary-fg-color: #4f46e5;" in css
+        assert "outline: 2px solid var(--md-accent-fg-color);" in css
 
 
 def test_consent_settings_adapter_only_restores_keyboard_access() -> None:
