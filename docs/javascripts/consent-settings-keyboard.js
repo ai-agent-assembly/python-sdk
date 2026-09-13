@@ -36,6 +36,16 @@
     settings.addEventListener("change", function () {
       control.setAttribute("aria-expanded", String(settings.checked));
     });
+
+    // Enter on a label synthesizes a click after keydown in some browsers.
+    // The key handler has already toggled the native checkbox, so suppress
+    // only that keyboard-generated label default action. Pointer label clicks
+    // retain Material's original behavior.
+    control.addEventListener("click", function (event) {
+      if (event.detail === 0) {
+        event.preventDefault();
+      }
+    });
   }
 
   if (document.readyState === "loading") {

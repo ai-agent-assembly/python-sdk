@@ -42,6 +42,7 @@ def test_consent_settings_adapter_only_restores_keyboard_access() -> None:
     assert 'event.key !== "Enter" && event.key !== " "' in adapter
     assert "settings.checked = !settings.checked" in adapter
     assert 'new Event("change", { bubbles: true })' in adapter
+    assert "event.detail === 0" in adapter
     assert "control.click()" not in adapter
     assert "localStorage" not in adapter
     assert "__md_set" not in adapter
