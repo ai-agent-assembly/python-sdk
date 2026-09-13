@@ -40,6 +40,18 @@ def test_docs_readability_preserves_existing_consent_and_analytics_contract() ->
     assert 'analytics_storage: "granted"' in analytics
 
 
+def test_dark_consent_fill_uses_readable_ink_in_current_and_alias_shells() -> None:
+    """Native pale fills must not inherit white primary/hover/focus text."""
+    for filename in ("aaasm-brand.css", "aaasm-alias-overlay.css"):
+        css = Path("docs/stylesheets", filename).read_text()
+        assert '[data-md-color-scheme="slate"] .md-consent__controls .md-button--primary,' in css
+        assert '[data-md-color-scheme="slate"] .md-consent__controls .md-button:is(:hover, :focus)' in css
+        assert "color: #111827;" in css
+        assert '[data-md-color-scheme="default"] .md-consent__controls {' in css
+        assert "--md-primary-fg-color: #4f46e5;" in css
+        assert "outline: 2px solid var(--md-accent-fg-color);" in css
+
+
 def test_consent_settings_adapter_only_restores_keyboard_access() -> None:
     """Manage settings must be keyboard reachable without owning consent state."""
     config = Path("mkdocs.yml").read_text()
