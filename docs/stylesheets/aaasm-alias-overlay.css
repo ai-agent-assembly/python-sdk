@@ -1,0 +1,23 @@
+/*
+ * Additive reading-shell overlay for Mike's moving stable/pre-release aliases.
+ * It is deliberately limited to compact header and consent presentation; the
+ * frozen version's article content, navigation data, and consent implementation
+ * remain owned by that version.
+ */
+@media (max-width: 76.1875em) {
+  .md-header__inner { min-width: 0; }
+  .md-header__title { flex: 1 1 auto; min-width: 0; }
+  .md-header__topic:first-child { align-items: center; display: flex; gap: 0.4rem; min-width: 0; }
+  .md-header__topic:first-child > .md-ellipsis { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .md-version { flex: 0 1 10rem; max-width: min(10rem, calc(100vw - 9rem)); min-width: 0; }
+  .md-version__current { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .md-version__list { left: 0.8rem; max-width: calc(100vw - 1.6rem); right: 0.8rem; width: auto; }
+}
+
+.md-consent__overlay { backdrop-filter: none; background: transparent; pointer-events: none; }
+.md-consent__inner { animation: none; bottom: 1rem; left: 50%; max-height: calc(100dvh - 2rem); max-width: 44rem; transform: translateX(-50%); width: calc(100vw - 2rem); }
+.md-consent__controls { display: grid; gap: 0.5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.md-typeset .md-consent__controls .md-button { align-items: center; display: inline-flex; justify-content: center; margin: 0; min-height: 2.75rem; text-align: center; width: 100%; }
+.md-typeset .md-consent__controls .md-button:last-child { grid-column: 1 / -1; }
+.md-typeset .md-consent__controls label[role="button"]:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .md-consent__overlay, .md-consent__inner { animation: none; transition: none; } }

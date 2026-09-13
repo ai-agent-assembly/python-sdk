@@ -1,3 +1,6 @@
+import json
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -55,3 +58,100 @@ def test_compact_header_reserves_space_for_its_controls() -> None:
     assert "text-overflow: ellipsis" in css
     assert "calc(100vw - 9rem)" in css
     assert ".md-version__list" in css
+
+
+def test_alias_overlay_only_updates_physical_moving_aliases(tmp_path: Path) -> None:
+    """The archive overlay must leave frozen trees and Mike's manifest intact."""
+    site = tmp_path / "site"
+    frozen = site / "v0.0.1-rc.4"
+    frozen.mkdir(parents=True)
+    (frozen / "index.html").write_text("<html><head></head><body>frozen</body></html>")
+    for alias in ("stable", "pre-release"):
+        directory = site / alias
+        directory.mkdir()
+        (directory / "index.html").write_text(
+            "<html><head></head><body>alias</body></html>",
+        )
+    manifest = [
+        {"version": "v0.0.1-rc.4", "title": "rc", "aliases": ["stable", "pre-release"]},
+    ]
+    (site / "versions.json").write_text(json.dumps(manifest))
+    before_manifest = (site / "versions.json").read_bytes()
+    before_frozen = (frozen / "index.html").read_bytes()
+
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci/apply_alias_overlay.py",
+            "--site-root",
+            str(site),
+            "--css",
+            "docs/stylesheets/aaasm-alias-overlay.css",
+            "--javascript",
+            "docs/javascripts/consent-settings-keyboard.js",
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci/apply_alias_overlay.py",
+            "--site-root",
+            str(site),
+            "--css",
+            "docs/stylesheets/aaasm-alias-overlay.css",
+            "--javascript",
+            "docs/javascripts/consent-settings-keyboard.js",
+        ],
+        check=True,
+    )
+
+    assert (site / "versions.json").read_bytes() == before_manifest
+    assert (frozen / "index.html").read_bytes() == before_frozen
+    for alias in ("stable", "pre-release"):
+        html = (site / alias / "index.html").read_text()
+        assert html.count("aaasm-alias-overlay.css") == 1
+        assert html.count("consent-settings-keyboard.js") == 1
+
+
+def test_alias_overlay_refuses_a_mike_symlink(tmp_path: Path) -> None:
+    """A symlink alias would write through to a frozen snapshot and is rejected."""
+    site = tmp_path / "site"
+    frozen = site / "v0.0.1-rc.4"
+    frozen.mkdir(parents=True)
+    (frozen / "index.html").write_text("<html><head></head><body>frozen</body></html>")
+    (site / "stable").symlink_to("v0.0.1-rc.4", target_is_directory=True)
+    (site / "versions.json").write_text(
+        json.dumps([{"version": "v0.0.1-rc.4", "aliases": ["stable"]}]),
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/ci/apply_alias_overlay.py",
+            "--site-root",
+            str(site),
+            "--css",
+            "docs/stylesheets/aaasm-alias-overlay.css",
+            "--javascript",
+            "docs/javascripts/consent-settings-keyboard.js",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "refusing frozen-tree mutation" in result.stderr
+
+
+def test_alias_publisher_materialises_only_moving_aliases_before_publishing() -> None:
+    """The release hook keeps Mike metadata and frozen snapshots protected."""
+    publisher = Path("scripts/ci/publish-moving-alias-overlay.sh").read_text()
+
+    assert "mike alias --update-aliases --alias-type copy" in publisher
+    assert '"${version}" "${alias}"' in publisher
+    assert "stable|pre-release" in publisher
+    assert 'git show "${PAGES_REMOTE}/${PAGES_BRANCH}:versions.json"' in publisher
+    assert "cmp -s" in publisher
+    assert 'git rev-parse "${PAGES_BRANCH}:${version}"' in publisher
+    assert 'git push "${PAGES_REMOTE}" "${PAGES_BRANCH}:${PAGES_BRANCH}"' in publisher

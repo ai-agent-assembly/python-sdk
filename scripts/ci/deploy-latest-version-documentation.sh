@@ -47,4 +47,9 @@ mkdocs build --strict
 # that this channel tracks master HEAD, not a tagged release.
 mike deploy --push --update-aliases --title "latest (master)" latest
 
+# Moving release aliases intentionally use physical copies for the narrowly
+# scoped readability overlay. This leaves every concrete release snapshot and
+# its manifest untouched. The surrounding workflow remains main-only.
+bash "${PROJECT_ROOT}/scripts/ci/publish-moving-alias-overlay.sh"
+
 echo "🍻 Latest documentation deployed (live, tracking master)."

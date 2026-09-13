@@ -9,6 +9,8 @@ on:
       - ".github/workflows/documentation.yaml"
       - "scripts/ci/deploy-latest-version-documentation.sh"
       - "scripts/ci/deploy-release-version-documentation.sh"
+      - "scripts/ci/apply_alias_overlay.py"
+      - "scripts/ci/publish-moving-alias-overlay.sh"
       # Doc — MkDocs config
       - "mkdocs.yml"
       # Doc — Markdown content
@@ -17,6 +19,7 @@ on:
       - "docs/_overrides/**"
       # Doc — publisher-local reading and compact-header styles
       - "docs/stylesheets/**"
+      - "docs/javascripts/**"
       # Python source code (mkdocstrings reads docstrings from agent_assembly/)
       - "agent_assembly/**/*.py"
       # Python project metadata (version is read from pyproject.toml)
@@ -27,10 +30,13 @@ on:
       - ".github/workflows/documentation.yaml"
       - "scripts/ci/deploy-latest-version-documentation.sh"
       - "scripts/ci/deploy-release-version-documentation.sh"
+      - "scripts/ci/apply_alias_overlay.py"
+      - "scripts/ci/publish-moving-alias-overlay.sh"
       - "mkdocs.yml"
       - "docs/**/*.md"
       - "docs/_overrides/**"
       - "docs/stylesheets/**"
+      - "docs/javascripts/**"
       - "agent_assembly/**/*.py"
       - "pyproject.toml"
   # Cut the frozen, versioned snapshot after a successful release run. The
