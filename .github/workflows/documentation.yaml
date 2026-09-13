@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "main"
-      - "integration"
+      - "uiux/visual-experience-overhaul"
     paths:
       # Doc — CI workflow + deploy scripts
       - ".github/workflows/documentation.yaml"
@@ -98,7 +98,7 @@ concurrency:
 jobs:
   build_documentation:
     name: Build documentation (PR, no deploy)
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/uiux/visual-experience-overhaul'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history for mike + git-revision-date plugins)

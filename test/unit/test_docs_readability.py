@@ -4,6 +4,15 @@ import sys
 from pathlib import Path
 
 
+def test_documentation_ci_uses_canonical_campaign_branch_without_deploy() -> None:
+    workflow = Path(".github/workflows/documentation.yaml").read_text()
+    assert '- "uiux/visual-experience-overhaul"' in workflow
+    assert "github.ref == 'refs/heads/uiux/visual-experience-overhaul'" in workflow
+    assert "github.ref == 'refs/heads/integration'" not in workflow
+    latest = workflow.split("  deploy_latest_documentation:", 1)[1]
+    assert "if: github.event_name == 'push' && github.ref == 'refs/heads/main'" in latest
+
+
 def test_docs_readability_keeps_native_consent_behavior_out_of_css() -> None:
     """The readability layer may change presentation, never consent semantics."""
     css = Path("docs/stylesheets/aaasm-brand.css").read_text()
