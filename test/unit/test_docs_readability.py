@@ -28,6 +28,23 @@ def test_docs_readability_preserves_existing_consent_and_analytics_contract() ->
     assert 'analytics_storage: "granted"' in analytics
 
 
+def test_consent_settings_adapter_only_restores_keyboard_access() -> None:
+    """Manage settings must be keyboard reachable without owning consent state."""
+    config = Path("mkdocs.yml").read_text()
+    adapter = Path("docs/javascripts/consent-settings-keyboard.js").read_text()
+
+    assert "javascripts/consent-settings-keyboard.js" in config
+    assert 'label[for="__settings"]' in adapter
+    assert "control.tabIndex = 0" in adapter
+    assert 'event.key !== "Enter" && event.key !== " "' in adapter
+    assert "localStorage" not in adapter
+    assert "__md_set" not in adapter
+    assert "gtag" not in adapter
+
+    css = Path("docs/stylesheets/aaasm-brand.css").read_text()
+    assert 'label[role="button"]:focus-visible' in css
+
+
 def test_compact_header_reserves_space_for_its_controls() -> None:
     css = Path("docs/stylesheets/aaasm-brand.css").read_text()
 
