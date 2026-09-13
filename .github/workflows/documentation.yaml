@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "integration"
     paths:
       # Doc — CI workflow + deploy scripts
       - ".github/workflows/documentation.yaml"
@@ -87,13 +88,13 @@ permissions:
 # Allow one concurrent deployment so a fast-follow push doesn't race the
 # previous deploy on gh-pages.
 concurrency:
-  group: "pages-mkdocs"
+  group: "pages-mkdocs-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
   build_documentation:
     name: Build documentation (PR, no deploy)
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/integration'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (full history for mike + git-revision-date plugins)
@@ -124,9 +125,12 @@ jobs:
           MKDOCS_GIT_COMMITTERS_APIKEY: ${{ secrets.GITHUB_TOKEN }}
         run: uv run mkdocs build --strict
 
+      - name: Validate docs readability regression
+        run: uv run pytest test/unit/test_docs_readability.py -q
+
   deploy_latest_documentation:
     name: Deploy latest documentation
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
