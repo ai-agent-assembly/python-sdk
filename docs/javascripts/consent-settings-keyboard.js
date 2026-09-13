@@ -25,10 +25,11 @@
         return;
       }
       event.preventDefault();
-      // Activating the label programmatically does not consistently invoke
-      // its native label-to-checkbox default action. Click the existing
-      // checkbox instead, keeping Material's own change/state behavior.
-      settings.click();
+      // This hidden Material checkbox doesn't receive synthetic activation
+      // through its label. Toggle only its transient disclosure state, then
+      // let the native bubbling change event update Material's UI.
+      settings.checked = !settings.checked;
+      settings.dispatchEvent(new Event("change", { bubbles: true }));
       control.setAttribute("aria-expanded", String(settings.checked));
     });
 
