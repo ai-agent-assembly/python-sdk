@@ -12,6 +12,8 @@ on:
       - "scripts/ci/deploy-release-version-documentation.sh"
       - "scripts/ci/apply_alias_overlay.py"
       - "scripts/ci/publish-moving-alias-overlay.sh"
+      - "scripts/ci/test_header_keyboard.mjs"
+      - "test/unit/test_docs_readability.py"
       # Doc — MkDocs config
       - "mkdocs.yml"
       # Doc — Markdown content
@@ -33,6 +35,8 @@ on:
       - "scripts/ci/deploy-release-version-documentation.sh"
       - "scripts/ci/apply_alias_overlay.py"
       - "scripts/ci/publish-moving-alias-overlay.sh"
+      - "scripts/ci/test_header_keyboard.mjs"
+      - "test/unit/test_docs_readability.py"
       - "mkdocs.yml"
       - "docs/**/*.md"
       - "docs/_overrides/**"
