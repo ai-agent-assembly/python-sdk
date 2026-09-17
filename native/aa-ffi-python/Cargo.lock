@@ -4,8 +4,8 @@ version = 4
 
 [[package]]
 name = "aa-core"
-version = "0.0.1-rc.6"
-source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=79ac000f7db4fa27220ade16bbe39e123a26a5e0#79ac000f7db4fa27220ade16bbe39e123a26a5e0"
+version = "0.0.1-rc.7"
+source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=0044d515d020863767d8011e18e266ec37344e5c#0044d515d020863767d8011e18e266ec37344e5c"
 dependencies = [
  "aa-security",
  "async-trait",
@@ -17,6 +17,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "thiserror",
+ "toml",
 ]
 
 [[package]]
@@ -35,8 +36,8 @@ dependencies = [
 
 [[package]]
 name = "aa-proto"
-version = "0.0.1-rc.6"
-source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=79ac000f7db4fa27220ade16bbe39e123a26a5e0#79ac000f7db4fa27220ade16bbe39e123a26a5e0"
+version = "0.0.1-rc.7"
+source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=0044d515d020863767d8011e18e266ec37344e5c#0044d515d020863767d8011e18e266ec37344e5c"
 dependencies = [
  "prost",
  "tonic",
@@ -46,8 +47,8 @@ dependencies = [
 
 [[package]]
 name = "aa-sdk-client"
-version = "0.0.1-rc.6"
-source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=79ac000f7db4fa27220ade16bbe39e123a26a5e0#79ac000f7db4fa27220ade16bbe39e123a26a5e0"
+version = "0.0.1-rc.7"
+source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=0044d515d020863767d8011e18e266ec37344e5c#0044d515d020863767d8011e18e266ec37344e5c"
 dependencies = [
  "aa-proto",
  "aa-security",
@@ -64,8 +65,8 @@ dependencies = [
 
 [[package]]
 name = "aa-security"
-version = "0.0.1-rc.6"
-source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=79ac000f7db4fa27220ade16bbe39e123a26a5e0#79ac000f7db4fa27220ade16bbe39e123a26a5e0"
+version = "0.0.1-rc.7"
+source = "git+https://github.com/ai-agent-assembly/agent-assembly.git?rev=0044d515d020863767d8011e18e266ec37344e5c#0044d515d020863767d8011e18e266ec37344e5c"
 dependencies = [
  "aho-corasick",
  "serde",
@@ -303,9 +304,9 @@ dependencies = [
 
 [[package]]
 name = "dirs"
-version = "6.0.0"
+version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
+checksum = "8d57d423b3c82e89b9a24ca3091fee61f456a26edbd28d26c65906f4bc1dcd8f"
 dependencies = [
  "dirs-sys",
 ]
@@ -1115,6 +1116,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_spanned"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6662b5879511e06e8999a8a235d848113e942c9124f211511b16466ee2995f26"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "serde_yaml"
 version = "0.9.34+deprecated"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1309,6 +1319,45 @@ dependencies = [
  "pin-project-lite",
  "tokio",
 ]
+
+[[package]]
+name = "toml"
+version = "1.1.6+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "920602543f0911ab71da12c50d59701da54c196d1a2bf5cb4b75667f137a406a"
+dependencies = [
+ "indexmap",
+ "serde_core",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "1.1.1+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3165f65f62e28e0115a00b2ebdd37eb6f3b641855f9d636d3cd4103767159ad7"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.1.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d38ac1cf9b95face32296c0a3ede1fdc270627c9d9c02a7274dd6d960dc4d56"
+dependencies = [
+ "winnow",
+]
+
+[[package]]
+name = "toml_writer"
+version = "1.1.2+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d56353a2a665ad0f41a421187180aab746c8c325620617ad883a99a1cbe66d2"
 
 [[package]]
 name = "tonic"
@@ -1655,6 +1704,12 @@ checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
 ]
+
+[[package]]
+name = "winnow"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23b97319f7b8343df12cc98938e5c3eb436064524c8d2b4e30a1d3a36eecdf81"
 
 [[package]]
 name = "wit-bindgen"

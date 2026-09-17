@@ -19,9 +19,9 @@ crate-type = ["cdylib"]
 # instead of the registered did:key DID (every governed tool call failed with
 # a spurious "credential token registered to a different agent" error).
 # AAASM-5839.
-aa-core = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "79ac000f7db4fa27220ade16bbe39e123a26a5e0", package = "aa-core", features = ["serde"] }
-aa-proto = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "79ac000f7db4fa27220ade16bbe39e123a26a5e0", package = "aa-proto" }
-aa-sdk-client = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "79ac000f7db4fa27220ade16bbe39e123a26a5e0", package = "aa-sdk-client" }
+aa-core = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-core", features = ["serde"] }
+aa-proto = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-proto" }
+aa-sdk-client = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-sdk-client" }
 prost = "0.14"
 pyo3 = { version = "0.29", features = ["extension-module"] }
 serde = { version = "1.0", features = ["derive"] }
