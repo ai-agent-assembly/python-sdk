@@ -27,7 +27,16 @@ permissions:
 
 jobs:
   analyze:
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # build-mode: none — CodeQL extracts source directly without a build.
+          - language: python
+            build-mode: none
 
     steps:
       - name: Checkout
@@ -38,10 +47,10 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@65216971a11ded447a6b76263d5a144519e5eee1 # codeql-bundle-v2.25.2
         with:
-          languages: python
-          build-mode: none
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Analyze
         uses: github/codeql-action/analyze@65216971a11ded447a6b76263d5a144519e5eee1 # codeql-bundle-v2.25.2
         with:
-          category: "/language:python"
+          category: "/language:${{ matrix.language }}"
