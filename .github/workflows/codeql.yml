@@ -37,6 +37,13 @@ jobs:
           # build-mode: none — CodeQL extracts source directly without a build.
           - language: python
             build-mode: none
+          # native/aa-ffi-python is first-party Rust (the pyo3 shim over
+          # aa-sdk-client). It cannot be covered by GitHub's *default* setup —
+          # PATCH code-scanning/default-setup rejects `rust` with HTTP 422 —
+          # but advanced setup analyses it fine with build-mode: none, so it
+          # needs no cargo build and no access to the git-pinned aa-* crates.
+          - language: rust
+            build-mode: none
 
     steps:
       - name: Checkout
