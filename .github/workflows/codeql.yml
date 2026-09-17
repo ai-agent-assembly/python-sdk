@@ -44,6 +44,11 @@ jobs:
           # needs no cargo build and no access to the git-pinned aa-* crates.
           - language: rust
             build-mode: none
+          # The `actions` language analyses the workflows in .github/workflows
+          # themselves (excessive GITHUB_TOKEN scope, untrusted-input
+          # injection, unpinned actions). Never previously requested here.
+          - language: actions
+            build-mode: none
 
     steps:
       - name: Checkout
