@@ -2,162 +2,162 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/configuration/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/quick-start/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/troubleshooting/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/api-reference/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/api-reference/client/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/api-reference/exceptions/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/api-reference/models/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/compatibility/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/compatibility/frameworks/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/compatibility/release-notes/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/compatibility/release-process/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/compatibility/runtime/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/concepts/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/concepts/architecture/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/development/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/development/docs-macros/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/development/adr/0001-hook-architecture/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/agno/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/crewai-research-crew/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/custom-tool-policy/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/framework-support/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/google-adk/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/haystack/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/langchain-basic-agent/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/langchain-research-agent/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/langgraph/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/llamaindex-tool-policy/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/microsoft-agent-framework/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/openai-agents-sdk/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/preparing-the-runtime-environment/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/pydantic-ai/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/examples/smolagents/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/guides/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/guides/authoring-adapters/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/guides/container-base-image/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/guides/handling-decisions/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/guides/type-checking/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
     <url>
          <loc>https://docs.agent-assembly.com/python-sdk/latest/release/RUNBOOK/</loc>
-         <lastmod>2026-09-14</lastmod>
+         <lastmod>2026-09-18</lastmod>
     </url>
 </urlset>
