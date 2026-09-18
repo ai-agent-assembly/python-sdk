@@ -77,9 +77,30 @@ permissions:
 
 # Allow one concurrent deployment so a fast-follow push doesn't race the
 # previous deploy on gh-pages.
+#
+# The group MUST stay ref-aware. It used to be the constant string
+# "pages-mkdocs", shared by every ref and every trigger in the repository, with
+# cancel-in-progress: true — so any run could cancel any other run, including a
+# PR docs build cancelling an in-flight gh-pages deploy. Nothing cross-ref had
+# actually landed here yet (across runs from 2026-07-16 to 2026-09-14 the only
+# two cancellations were benign self-supersessions), but that is a property of
+# this repository's traffic, not of the configuration: the identical shape in
+# ai-agent-assembly/arena, which does receive simultaneous Dependabot batches,
+# lost 4 real deploys and 7 real PR builds in 6 weeks. Fixed here on shape
+# rather than on symptom. See AAASM-6107.
+#
+# The split below is on "does this run deploy?", not on `github.event_name ==
+# 'push'`. Three of the four triggers publish to gh-pages — push
+# (deploy_latest_documentation), workflow_run (deploy_release_documentation) and
+# workflow_dispatch (the operator republish, AAASM-3853) — and they all drive
+# the same scripts/ci/deploy-*-documentation.sh, so all three must share the one
+# deploy group or a release cut could still race an operator republish. Only
+# pull_request is build-only, so only it gets a per-ref group, where a newer
+# attempt superseding its own earlier one is the desirable behaviour and the only
+# cancellation still enabled.
 concurrency:
-  group: "pages-mkdocs"
-  cancel-in-progress: true
+  group: pages-mkdocs-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build_documentation:
