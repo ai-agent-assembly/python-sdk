@@ -130,6 +130,14 @@ Two independent knobs control governance. It's worth keeping them straight:
 | `proxy` | Routes outbound traffic through the `aasm` sidecar proxy — network-egress policy without modifying the agent's source. |
 | `ebpf` | Kernel-level interception via eBPF. **Linux only** — raises `ConfigurationError` elsewhere. |
 
+The two knobs are independent with one exception: what a **failed agent registration** does to
+`init_assembly()`. Under `sdk-only` — the mode that starts no sidecar and is documented as
+needing no gateway — an unreachable gateway **warns** and init continues. Every other mode, and
+any mode where you pass `enforcement_mode="enforce"` explicitly, treats it as a misconfiguration
+and fails init closed (AAASM-6155). Only whether `init_assembly()` raises differs: in both cases
+`ctx.registered` reports `False`, the warning is unconditional, and a governed tool call with no
+authoritative decision behind it is still **denied** under enforce.
+
 ### Enforcement modes
 
 `enforcement_mode` is the governance posture sent to the gateway at registration. Leaving it

@@ -686,6 +686,138 @@ def test_native_present_but_no_runtime_client_warns_and_marks_unregistered(
         context.shutdown()
 
 
+def test_sdk_only_default_posture_warns_on_register_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """AAASM-6155 regression: ``mode="sdk-only"`` with no ``enforcement_mode`` must
+    warn on a register failure, not abort init.
+
+    ``sdk-only`` is documented as the in-process-only layer that starts no network
+    sidecar and needs no gateway, so requiring a reachable one there contradicted
+    the mode's purpose. The AAASM-4130 fail-closed posture for an unset
+    ``enforcement_mode`` still applies to every other mode — see the ``auto`` /
+    ``proxy`` / ``ebpf`` cases below, which are what keeps this from being a blanket
+    relaxation.
+    """
+    runtime_client = FakeRuntimeClient(decision="allow")
+    runtime_client.register_should_raise = RuntimeError("gateway gRPC endpoint is unreachable for registration")
+    install_fake_core(monkeypatch, runtime_client)
+    _no_network(monkeypatch)
+    monkeypatch.setattr(core_assembly, "_register_adapters", lambda **_kwargs: ([], AUDIT_SINK_ABSENT))
+
+    context = init_assembly(gateway_url=_GW_URL, api_key=_API_KEY, agent_id="offline-demo", mode="sdk-only")
+    try:
+        # Init came up, and it is honest about what it could not do.
+        assert context.registered is False
+        err = capsys.readouterr().err
+        assert "NOT registered" in err
+        assert "registration failed" in err
+    finally:
+        context.shutdown()
+
+
+@pytest.mark.parametrize("mode", ["auto", "proxy", "ebpf"])
+def test_non_sdk_only_default_posture_still_propagates_register_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    mode: str,
+) -> None:
+    """The AAASM-6155 relaxation is scoped to ``sdk-only`` and nothing else.
+
+    Every mode that does bring up an interception layer keeps the AAASM-4130
+    posture: an unset ``enforcement_mode`` registers under the gateway's
+    server-side default of live ``enforce``, so a gateway it cannot register with
+    fails init closed. Without these cases the ``sdk-only`` test above would also
+    pass if the guard had been removed outright.
+    """
+    runtime_client = FakeRuntimeClient(decision="allow")
+    runtime_client.register_should_raise = RuntimeError("gateway gRPC endpoint is unreachable for registration")
+    install_fake_core(monkeypatch, runtime_client)
+    # Patched so the assertion is about registration, not about which network
+    # layer this host happens to support (``ebpf`` is Linux-only).
+    _no_network(monkeypatch)
+    monkeypatch.setattr(core_assembly, "_register_adapters", lambda **_kwargs: ([], AUDIT_SINK_ABSENT))
+
+    with pytest.raises(ConfigurationError, match="Failed to initialize assembly runtime"):
+        init_assembly(gateway_url=_GW_URL, api_key=_API_KEY, agent_id=f"agent-{mode}", mode=mode)  # type: ignore[arg-type]
+
+
+def test_sdk_only_register_failure_still_denies_governed_tool_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The AAASM-6155 relaxation must not let an ``sdk-only`` session run ungoverned.
+
+    Only whether ``init_assembly`` *raises* changes. With registration failed and
+    the runtime unable to return an authoritative verdict, the interceptor the
+    adapters are handed keeps its enforce-posture fail-closed behaviour: the
+    governed tool call is denied (AAASM-3106). A relaxation that had also loosened
+    the interceptor would show ``allow`` here.
+    """
+    # ``query_failed`` is what an unreachable runtime yields — not an
+    # authoritative allow, so under enforce it must deny.
+    runtime_client = FakeRuntimeClient(decision="query_failed")
+    runtime_client.register_should_raise = RuntimeError("gateway gRPC endpoint is unreachable for registration")
+    install_fake_core(monkeypatch, runtime_client)
+    _no_network(monkeypatch)
+    adapter = _CapturingAdapter()
+    monkeypatch.setattr(core_assembly, "_register_adapters", _patched_register_adapters(adapter))
+
+    context = init_assembly(gateway_url=_GW_URL, api_key=_API_KEY, agent_id="offline-governed", mode="sdk-only")
+    try:
+        assert context.registered is False
+        assert adapter.interceptor is not None
+        interceptor: Any = adapter.interceptor
+        verdict = interceptor.check_tool_start(
+            serialized={"name": "web_search"},
+            input_str="q",
+            tool_name="web_search",
+            args={"q": "x"},
+        )
+        assert verdict["status"] == "deny"
+        assert verdict["status"] != "allow"
+    finally:
+        context.shutdown()
+
+
+@pytest.mark.parametrize(
+    ("mode", "enforcement_mode", "fatal"),
+    [
+        # sdk-only: the None default warns; an explicit enforce still aborts.
+        ("sdk-only", None, False),
+        ("sdk-only", "enforce", True),
+        ("sdk-only", "observe", False),
+        ("sdk-only", "disabled", False),
+        # Every other mode keeps the AAASM-4130 posture for the None default.
+        ("auto", None, True),
+        ("auto", "enforce", True),
+        ("auto", "observe", False),
+        ("auto", "disabled", False),
+        ("proxy", None, True),
+        ("proxy", "enforce", True),
+        ("proxy", "observe", False),
+        ("proxy", "disabled", False),
+        ("ebpf", None, True),
+        ("ebpf", "enforce", True),
+        ("ebpf", "observe", False),
+        ("ebpf", "disabled", False),
+    ],
+)
+def test_register_failure_fatality_matrix(mode: str, enforcement_mode: str | None, fatal: bool) -> None:
+    """The full ``mode`` × ``enforcement_mode`` contract for a failed register.
+
+    Spelled out exhaustively because the defect (AAASM-6155) was a single cell of
+    this matrix — ``sdk-only`` × ``None`` — flipping when the guard moved from an
+    equality test to :func:`_local_posture_is_enforce`.
+    """
+    assert (
+        core_assembly._register_failure_is_fatal(
+            mode=mode,  # type: ignore[arg-type]
+            enforcement_mode=enforcement_mode,  # type: ignore[arg-type]
+        )
+        is fatal
+    )
+
+
 def test_register_failure_under_observe_warns_and_marks_unregistered(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
