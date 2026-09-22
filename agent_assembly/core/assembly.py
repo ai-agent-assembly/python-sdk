@@ -28,6 +28,7 @@ from agent_assembly.core.gateway_resolver import (
     resolve_gateway_url,
 )
 from agent_assembly.core.runtime_interceptor import (
+    ENFORCE_MODE,
     _local_posture_is_enforce,
     _native_core_available,
     build_governance_interceptor,
@@ -215,6 +216,14 @@ def init_assembly(
     a ``deny`` blocks the tool before it runs. The SDK never calls a core HTTP
     endpoint directly for registration or policy checks.
 
+    :param mode: Interception layer to activate (see :data:`RuntimeMode`).
+        ``"sdk-only"`` is the in-process-only layer that starts no network
+        sidecar, so it is also the one mode where a gateway that cannot be
+        registered with only **warns** instead of failing init (AAASM-6155) —
+        unless ``enforcement_mode="enforce"`` is passed explicitly, which asks
+        for the fail-closed posture by name and aborts in every mode. Governed
+        tool calls are unaffected either way: the interceptor still denies under
+        enforce when no authoritative decision is available.
     :param control_plane_url: Optional URL of the control-plane HTTP API. When
         supplied, the SDK issues its remaining HTTP routes (topology edges,
         secret dispatch) against it instead of ``gateway_url``. When omitted it
@@ -308,6 +317,7 @@ def init_assembly(
                 runtime_client=runtime_client,
                 agent_id=resolved_agent_id,
                 enforcement_mode=enforcement_mode,
+                mode=mode,
                 gateway_endpoint=resolve_gateway_grpc_endpoint(gateway_url, allow_insecure=allow_insecure),
                 native_available=native_available,
                 team_id=team_id,
@@ -456,11 +466,48 @@ def _warn_audit_not_recorded(disposition: AuditSinkDisposition) -> None:
     )
 
 
+def _register_failure_is_fatal(*, mode: RuntimeMode, enforcement_mode: EnforcementMode | None) -> bool:
+    """Whether a failed ``register`` must abort init rather than warn (AAASM-6155).
+
+    Two rules, in order:
+
+    * An **explicit** ``enforce`` always aborts, in every ``mode``. The caller
+      asked for the fail-closed posture by name, so a gateway it cannot register
+      with is a misconfiguration and init must not come up.
+    * Otherwise ``mode="sdk-only"`` warns and continues. That mode is documented
+      as the in-process-only layer that starts no network sidecar and is "the best
+      choice for deterministic, offline examples and tests"; the quick-start
+      states the offline path *warns* that the agent is unregistered. Requiring a
+      reachable gateway there contradicts the one mode whose purpose is to run
+      without one.
+
+    Every other ``mode`` keeps the :func:`_local_posture_is_enforce` posture, so an
+    unset ``enforcement_mode`` of ``None`` still aborts (AAASM-4130): ``None``
+    registers under the gateway's server-side default of live ``enforce``, and
+    ``auto`` / ``proxy`` / ``ebpf`` all do bring up an interception layer that the
+    gateway is expected to back.
+
+    Relaxing init here does not make an ``sdk-only`` session run ungoverned. The
+    registration warning is unconditional (see :func:`_warn_agent_unregistered`),
+    ``AssemblyContext.registered`` reports ``False``, and the interceptor the
+    adapters are handed keeps its own fail-closed posture under enforce — an
+    unreachable runtime or an unauthoritative ``query_policy`` still **denies** the
+    tool call (AAASM-3106, AAASM-4760). What changes is only whether ``init_assembly``
+    raises instead of warning.
+    """
+    if enforcement_mode == ENFORCE_MODE:
+        return True
+    if mode == "sdk-only":
+        return False
+    return _local_posture_is_enforce(enforcement_mode)
+
+
 def _register_agent_with_gateway(
     *,
     runtime_client: Any | None,
     agent_id: str,
     enforcement_mode: EnforcementMode | None,
+    mode: RuntimeMode,
     gateway_endpoint: str,
     native_available: bool,
     team_id: str | None = None,
@@ -488,8 +535,9 @@ def _register_agent_with_gateway(
     ``register`` raises, the failure is no longer silent: a loud
     :func:`_warn_agent_unregistered` fires and ``False`` is returned (AAASM-4547).
     Init still proceeds so the proxy / eBPF layers stay authoritative — except
-    under an enforce posture (the ``None`` default or explicit ``enforce``), where a
-    ``register`` failure propagates so a misconfigured gateway fails init closed.
+    where :func:`_register_failure_is_fatal` says the failure must abort, which is
+    an explicit ``enforce`` in any mode, or the ``None`` default in any mode other
+    than ``sdk-only`` (AAASM-6155).
     """
     if runtime_client is None:
         if native_available:
@@ -512,7 +560,7 @@ def _register_agent_with_gateway(
             parent_agent_id=parent_agent_id,
         )
     except Exception as error:
-        if _local_posture_is_enforce(enforcement_mode):
+        if _register_failure_is_fatal(mode=mode, enforcement_mode=enforcement_mode):
             raise
         _warn_agent_unregistered(f"registration failed: {error}")
         return False
