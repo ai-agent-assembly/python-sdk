@@ -2677,6 +2677,13 @@ into a single <code>AssemblyError</code> so no patch is ever left installed. Ful
 </tr>
 </tbody>
 </table>
+<p>The two knobs are independent with one exception: what a <strong>failed agent registration</strong> does to
+<code>init_assembly()</code>. Under <code>sdk-only</code> — the mode that starts no sidecar and is documented as
+needing no gateway — an unreachable gateway <strong>warns</strong> and init continues. Every other mode, and
+any mode where you pass <code>enforcement_mode="enforce"</code> explicitly, treats it as a misconfiguration
+and fails init closed (AAASM-6155). Only whether <code>init_assembly()</code> raises differs: in both cases
+<code>ctx.registered</code> reports <code>False</code>, the warning is unconditional, and a governed tool call with no
+authoritative decision behind it is still <strong>denied</strong> under enforce.</p>
 <h3 id="enforcement-modes">Enforcement modes<a class="headerlink" href="#enforcement-modes" title="Permanent link">&para;</a></h3>
 <p><code>enforcement_mode</code> is the governance posture sent to the gateway at registration. Leaving it
 <code>None</code> omits the field, so the gateway applies its server-side default (live <code>enforce</code>).</p>
@@ -2723,7 +2730,7 @@ full parameter reference is in <a href="../configuration/">Configuration</a>.</p
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="August 15, 2026 18:56:43 CST"><span class="timeago" datetime="2026-08-15T18:56:43+08:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="August 15, 2026 18:56:43 CST">2026-08-15</span> by Bryant</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="September 22, 2026 21:15:46 CST"><span class="timeago" datetime="2026-09-22T21:15:46+08:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="September 22, 2026 21:15:46 CST">2026-09-22</span> by Bryant</span>
 
     
     
