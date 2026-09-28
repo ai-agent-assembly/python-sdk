@@ -5,9 +5,13 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    # AAASM-6210: every name here must exist as a repository label. Dependabot
+    # does not fail on a name that does not exist — it silently applies the
+    # subset that does and drops the rest, so a wrong name is invisible on the
+    # pull request. The emoji-prefixed names previously listed in this file
+    # existed in no repo in the fleet, so only "dependencies" was ever applied.
     labels:
-      - "🔍 enhancement"
-      - "🤖 github actions"
+      - "github-actions"
       - "dependencies"
     commit-message:
       prefix: ⬆
@@ -18,8 +22,7 @@ updates:
     schedule:
       interval: "daily"
     labels:
-      - "🔍 enhancement"
-      - "🐍 python"
+      - "python"
       - "dependencies"
     commit-message:
       prefix: ⬆
@@ -30,8 +33,7 @@ updates:
     schedule:
       interval: "daily"
     labels:
-      - "🔍 enhancement"
-      - "🦀 rust"
+      - "rust"
       - "dependencies"
     commit-message:
       prefix: ⬆
