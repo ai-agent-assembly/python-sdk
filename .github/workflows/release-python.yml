@@ -605,7 +605,7 @@ jobs:
       id-token: write  # OIDC token for Trusted Publisher
     steps:
       - name: Download all build artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
         with:
           pattern: wheels-*
           path: dist
@@ -646,7 +646,7 @@ jobs:
       - name: Download CycloneDX SBOM
         # AAASM-3615: pull the SBOM built by the `sbom` job so it can be
         # attached to the Release below.
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
         with:
           name: sbom
       - name: Create tag and GitHub Release
