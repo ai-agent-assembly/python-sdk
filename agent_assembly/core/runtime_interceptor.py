@@ -9,8 +9,9 @@ the :class:`~agent_assembly.client.gateway.GatewayClient`, which has no
 :class:`RuntimeQueryInterceptor` wraps the ``GatewayClient`` and adds a
 ``check_tool_start`` that asks a connected
 ``agent_assembly._core.RuntimeClient`` whether the tool call is allowed, via
-``query_policy``. The runtime is the authority: it redacts in place, so this
-layer only ever *blocks* on an explicit ``deny`` and otherwise proceeds.
+``query_policy``. The native query returns only ``(decision, reason)``; no
+redacted payload crosses the ABI, so this layer cannot apply a ``redact``
+verdict client-side. Under enforce a ``redact`` therefore denies (AAASM-6352).
 
 Failure posture is governed by ``enforcement_mode`` (AAASM-3106):
 
@@ -30,8 +31,10 @@ Failure posture is governed by ``enforcement_mode`` (AAASM-3106):
   returns the bare client unchanged, a raising or error ``query_policy``
   proceeds, exactly as before.
 
-The runtime remains the authority on *redaction* (it redacts in place); this
-layer only ever decides allow / deny / pending.
+This layer cannot redact: a ``redact`` verdict would otherwise run the tool with
+the original, secret-bearing arguments, so under enforce it denies until redacted
+payload support lands (AAASM-1920, AAASM-6352). Under observe / disabled it
+proceeds (dry-run fail-open).
 """
 
 from __future__ import annotations
@@ -66,8 +69,16 @@ _ERROR_DECISIONS = frozenset({"query_failed", "channel_closed", "shutdown", "err
 # else — the proto3 zero value ``unspecified`` ("no decision rendered"), an unknown
 # string, an empty value, or a missing ``decision`` key — is not an authoritative
 # allow and must fail closed under ``enforce`` (AAASM-4014, AAASM-4166), matching the
-# Node SDK; the runtime remains the authority on redaction, so ``redact`` proceeds.
-_ALLOW_DECISIONS = frozenset({"allow", "redact"})
+# Node SDK. ``redact`` is deliberately NOT here: the native query returns no
+# redacted payload, so the tool would run with the original secret-bearing args
+# (AAASM-6352); it is handled explicitly in ``check_tool_start``.
+_ALLOW_DECISIONS = frozenset({"allow"})
+
+# Deny reason for a ``redact`` verdict this SDK cannot honour client-side (AAASM-6352).
+_REDACT_UNSUPPORTED_REASON = (
+    "gateway required redaction the SDK cannot apply client-side; "
+    "redacted payload support tracked in AAASM-1920/AAASM-6352"
+)
 
 # Deny reason surfaced when the native ``agent_assembly._core`` extension is absent
 # under an enforce posture (AAASM-4760). Previously this case returned the bare
@@ -341,8 +352,10 @@ class RuntimeQueryInterceptor:
         * ``"deny"`` → ``{"status": "deny", "reason": ...}``.
         * ``"pending"`` → ``{"status": "pending", "reason": ...}`` so the
           adapter's existing approval path runs.
-        * ``"allow"`` / ``"redact"`` → ``{"status": "allow"}``. The runtime
-          redacts authoritatively; this layer never redacts.
+        * ``"allow"`` → ``{"status": "allow"}``.
+        * ``"redact"`` → ``deny`` under ``enforce`` (no redacted payload crosses
+          the ABI, so the tool would run with the original secrets; AAASM-6352),
+          else ``allow`` (dry-run fail-open).
         * A raising ``query_policy``, the proto3 zero value ``"unspecified"``
           ("no decision rendered"), an error-sentinel ``decision``
           (``query_failed`` / ``channel_closed`` / ``shutdown``), or any
@@ -395,6 +408,8 @@ class RuntimeQueryInterceptor:
         if decision in _ERROR_DECISIONS:
             # Native reported it could not reach an authoritative verdict.
             return self._on_query_failure(reason or f"runtime returned {decision}")
+        if decision == "redact":
+            return self._on_query_failure(_REDACT_UNSUPPORTED_REASON)
         if decision in _ALLOW_DECISIONS:
             return {"status": "allow"}
         # Unknown / empty / missing decision: not an authoritative allow, so fail
