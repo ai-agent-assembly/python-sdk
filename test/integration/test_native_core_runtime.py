@@ -250,6 +250,54 @@ def test_query_policy_returns_deny_when_runtime_denies(native_core: Any) -> None
         server.close()
 
 
+def _redact_check(native_core: Any, payload: bytes, *, enforce: bool) -> dict[str, Any]:
+    """Drive the REAL native client + production interceptor against a mock runtime."""
+    from agent_assembly.core.runtime_interceptor import RuntimeQueryInterceptor
+
+    server = MockRuntimeServer(policy_payload=payload)
+    server.start()
+    client = native_core.RuntimeClient.connect(server.socket_path)
+    try:
+        interceptor = RuntimeQueryInterceptor(object(), client, "agent-001", enforce=enforce)
+        return interceptor.check_tool_start(serialized={"name": "web_search"}, input_str="query")
+    finally:
+        client.close()
+        server.close()
+
+
+@pytest.mark.integration
+def test_native_surfaces_a_runtime_redact_verdict(native_core: Any) -> None:
+    # CheckActionResponse { decision: REDACT } => field 1 (varint) = 4.
+    server = MockRuntimeServer(policy_payload=b"\x08\x04")
+    server.start()
+    client = native_core.RuntimeClient.connect(server.socket_path)
+    try:
+        result = client.query_policy("agent-001", "tool_call", "web_search", '{"q": "x"}')
+        assert result["decision"] == "redact"
+    finally:
+        client.close()
+        server.close()
+
+
+@pytest.mark.integration
+def test_real_native_redact_denies_under_enforce(native_core: Any) -> None:
+    """AAASM-6352: a real runtime REDACT must not run the tool with the original args."""
+    result = _redact_check(native_core, b"\x08\x04", enforce=True)
+    assert result["status"] == "deny"
+    assert "cannot apply client-side" in result["reason"]
+
+
+@pytest.mark.integration
+def test_real_native_allow_proceeds_under_enforce_control(native_core: Any) -> None:
+    """Paired control: same path and posture, only the runtime verdict differs."""
+    assert _redact_check(native_core, b"\x08\x01", enforce=True) == {"status": "allow"}
+
+
+@pytest.mark.integration
+def test_real_native_redact_stays_advisory_without_enforce(native_core: Any) -> None:
+    assert _redact_check(native_core, b"\x08\x04", enforce=False) == {"status": "allow"}
+
+
 @pytest.mark.integration
 def test_query_policy_fails_open_when_runtime_unreachable(native_core: Any) -> None:
     # No server bound at this path: the runtime never answers, so the shared
