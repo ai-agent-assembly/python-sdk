@@ -49,21 +49,34 @@ class MockRuntimeServer:
             with conn:
                 conn.settimeout(0.2)
 
-                # Heartbeat frame from client is a single tag byte.
-                tag = self._read_u8(conn)
-                if tag != 4:
-                    return
-                self._write_frame(conn, 3, b"")
+                # AAASM-3587: the real runtime issues a handshake challenge first
+                # and the shared client completes it (fail-closed) before any
+                # other traffic. The mock needs only a decodable challenge
+                # (HandshakeChallenge { nonce: bytes } = field 1, 32 bytes); it
+                # does not verify the proof — that is the runtime's job.
+                self._write_frame(conn, 5, b"\x0a\x20" + b"\x5a" * 32)
 
                 while not self._stop.is_set():
                     try:
                         tag = self._read_u8(conn)
-                    except (TimeoutError, OSError):
+                    except TimeoutError:
+                        continue
+                    except OSError:
+                        return
+
+                    if tag == 4:
+                        # Heartbeat frame from client is a single tag byte.
+                        try:
+                            self._write_frame(conn, 3, b"")
+                        except OSError:
+                            return
                         continue
 
-                    if tag in (1, 2, 3):
+                    if tag in (1, 2, 3, 5):
                         _ = self._read_length_delimited(conn)
 
+                    if tag == 5:
+                        continue
                     if tag == 1:
                         if self._policy_delay_ms > 0:
                             time.sleep(self._policy_delay_ms / 1000.0)
