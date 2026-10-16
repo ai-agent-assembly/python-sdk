@@ -49,21 +49,34 @@ class MockRuntimeServer:
             with conn:
                 conn.settimeout(0.2)
 
-                # Heartbeat frame from client is a single tag byte.
-                tag = self._read_u8(conn)
-                if tag != 4:
-                    return
-                self._write_frame(conn, 3, b"")
+                # AAASM-3587: the real runtime issues a handshake challenge first
+                # and the shared client completes it (fail-closed) before any
+                # other traffic. The mock needs only a decodable challenge
+                # (HandshakeChallenge { nonce: bytes } = field 1, 32 bytes); it
+                # does not verify the proof — that is the runtime's job.
+                self._write_frame(conn, 5, b"\x0a\x20" + b"\x5a" * 32)
 
                 while not self._stop.is_set():
                     try:
                         tag = self._read_u8(conn)
-                    except (TimeoutError, OSError):
+                    except TimeoutError:
+                        continue
+                    except OSError:
+                        return
+
+                    if tag == 4:
+                        # Heartbeat frame from client is a single tag byte.
+                        try:
+                            self._write_frame(conn, 3, b"")
+                        except OSError:
+                            return
                         continue
 
-                    if tag in (1, 2, 3):
+                    if tag in (1, 2, 3, 5):
                         _ = self._read_length_delimited(conn)
 
+                    if tag == 5:
+                        continue
                     if tag == 1:
                         if self._policy_delay_ms > 0:
                             time.sleep(self._policy_delay_ms / 1000.0)
@@ -235,6 +248,54 @@ def test_query_policy_returns_deny_when_runtime_denies(native_core: Any) -> None
     finally:
         client.close()
         server.close()
+
+
+def _redact_check(native_core: Any, payload: bytes, *, enforce: bool) -> dict[str, Any]:
+    """Drive the REAL native client + production interceptor against a mock runtime."""
+    from agent_assembly.core.runtime_interceptor import RuntimeQueryInterceptor
+
+    server = MockRuntimeServer(policy_payload=payload)
+    server.start()
+    client = native_core.RuntimeClient.connect(server.socket_path)
+    try:
+        interceptor = RuntimeQueryInterceptor(object(), client, "agent-001", enforce=enforce)
+        return interceptor.check_tool_start(serialized={"name": "web_search"}, input_str="query")
+    finally:
+        client.close()
+        server.close()
+
+
+@pytest.mark.integration
+def test_native_surfaces_a_runtime_redact_verdict(native_core: Any) -> None:
+    # CheckActionResponse { decision: REDACT } => field 1 (varint) = 4.
+    server = MockRuntimeServer(policy_payload=b"\x08\x04")
+    server.start()
+    client = native_core.RuntimeClient.connect(server.socket_path)
+    try:
+        result = client.query_policy("agent-001", "tool_call", "web_search", '{"q": "x"}')
+        assert result["decision"] == "redact"
+    finally:
+        client.close()
+        server.close()
+
+
+@pytest.mark.integration
+def test_real_native_redact_denies_under_enforce(native_core: Any) -> None:
+    """AAASM-6352: a real runtime REDACT must not run the tool with the original args."""
+    result = _redact_check(native_core, b"\x08\x04", enforce=True)
+    assert result["status"] == "deny"
+    assert "cannot apply client-side" in result["reason"]
+
+
+@pytest.mark.integration
+def test_real_native_allow_proceeds_under_enforce_control(native_core: Any) -> None:
+    """Paired control: same path and posture, only the runtime verdict differs."""
+    assert _redact_check(native_core, b"\x08\x01", enforce=True) == {"status": "allow"}
+
+
+@pytest.mark.integration
+def test_real_native_redact_stays_advisory_without_enforce(native_core: Any) -> None:
+    assert _redact_check(native_core, b"\x08\x04", enforce=False) == {"status": "allow"}
 
 
 @pytest.mark.integration

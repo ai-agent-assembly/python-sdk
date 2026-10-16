@@ -45,7 +45,8 @@ NetworkMode = Literal["ebpf", "proxy", "sdk-only"]
 EnforcementMode = Literal["enforce", "observe", "disabled"]
 """Posture the governance gateway should apply to this agent's actions.
 
-* ``"enforce"`` — default; deny blocks the action, redact strips secrets.
+* ``"enforce"`` — default; deny blocks the action; a redact verdict also blocks it, because
+  the SDK cannot apply redaction client-side (AAASM-6352, AAASM-1920).
 * ``"observe"`` — dry-run; the gateway records what *would* have happened
   but lets every action through. Surfaced by ``aa audit list --dry-run-only``.
 * ``"disabled"`` — policy evaluation skipped entirely. Hermetic test only.

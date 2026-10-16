@@ -74,7 +74,7 @@ def test_deny_decision_maps_to_block_status() -> None:
     assert runtime_client.calls == [("agent-001", "tool_call", "web_search", '{"q": "x"}')]
 
 
-@pytest.mark.parametrize("decision", ["allow", "redact", "unspecified", "anything-else"])
+@pytest.mark.parametrize("decision", ["allow", "unspecified", "anything-else"])
 def test_non_deny_decisions_proceed(decision: str) -> None:
     interceptor = RuntimeQueryInterceptor(_FakeGatewayClient(), _FakeRuntimeClient(decision), "agent-001")
 
@@ -752,12 +752,35 @@ def test_missing_decision_key_denies_under_enforce() -> None:
     assert result["status"] == "deny"
 
 
-@pytest.mark.parametrize("decision", ["allow", "redact"])
-def test_known_good_decisions_allow_under_enforce(decision: str) -> None:
-    """Authoritative allow verdicts still proceed under enforce; the runtime
-    remains the authority on redaction, so ``redact`` proceeds here. ``unspecified``
-    is no longer among them — it fails closed (AAASM-4166)."""
-    interceptor = RuntimeQueryInterceptor(_FakeGatewayClient(), _FakeRuntimeClient(decision), "agent-001", enforce=True)
+def test_allow_decision_proceeds_under_enforce() -> None:
+    """An authoritative ``allow`` still proceeds under enforce. ``unspecified``
+    is not one — it fails closed (AAASM-4166) — and neither is ``redact``
+    (AAASM-6352): the SDK cannot apply it, so it is covered by the redact tests."""
+    interceptor = RuntimeQueryInterceptor(_FakeGatewayClient(), _FakeRuntimeClient("allow"), "agent-001", enforce=True)
+
+    result = interceptor.check_tool_start(serialized={"name": "t"}, input_str="i")
+
+    assert result == {"status": "allow"}
+
+
+def test_redact_decision_denies_under_enforce() -> None:
+    """AAASM-6352: no redacted payload crosses the ABI, so allowing ``redact``
+    would run the tool with the original secret-bearing args. Deny, with a reason
+    naming the limitation."""
+    interceptor = RuntimeQueryInterceptor(_FakeGatewayClient(), _FakeRuntimeClient("redact"), "agent-001", enforce=True)
+
+    result = interceptor.check_tool_start(serialized={"name": "t"}, input_str="i")
+
+    assert result["status"] == "deny"
+    assert "cannot apply client-side" in result["reason"]
+    assert "AAASM-1920" in result["reason"]
+
+
+def test_redact_decision_allows_under_observe() -> None:
+    """Observe / disabled keep the dry-run fail-open posture for ``redact``."""
+    interceptor = RuntimeQueryInterceptor(
+        _FakeGatewayClient(), _FakeRuntimeClient("redact"), "agent-001", enforce=False
+    )
 
     result = interceptor.check_tool_start(serialized={"name": "t"}, input_str="i")
 
