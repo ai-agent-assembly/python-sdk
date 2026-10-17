@@ -299,17 +299,17 @@ def test_real_native_redact_stays_advisory_without_enforce(native_core: Any) -> 
 
 
 @pytest.mark.integration
-def test_query_policy_fails_open_when_runtime_unreachable(native_core: Any) -> None:
-    # No server bound at this path: the runtime never answers, so the shared
-    # client's query times out and the binding must fail OPEN (allow), never
-    # surface an error a caller would read as a deny.
+def test_query_policy_surfaces_a_failure_sentinel_when_runtime_unreachable(native_core: Any) -> None:
+    # No server bound at this path: the IPC connection never comes up. The
+    # binding must report that as an error-sentinel decision (AAASM-3920), NOT a
+    # fabricated "allow" - the Python guard decides what a failure means.
     socket_dir = tempfile.TemporaryDirectory(prefix="aaasm3046-")
     socket_path = str(Path(socket_dir.name) / "absent.sock")
 
     client = native_core.RuntimeClient.connect(socket_path)
     try:
         result = client.query_policy("agent-001", "tool_call")
-        assert result["decision"] == "allow"
+        assert result["decision"] == "channel_closed"
     finally:
         client.close()
         socket_dir.cleanup()
@@ -350,13 +350,7 @@ def test_wired_check_blocks_on_runtime_deny(native_core: Any) -> None:
         server.close()
 
 
-@pytest.mark.integration
-def test_wired_check_fails_open_when_runtime_unreachable(native_core: Any) -> None:
-    """Wave 3 (AAASM-3049): no reachable runtime => on_tool_start proceeds.
-
-    The native query_policy fails open (allow) when the socket is unbound, so the
-    wired check must NOT raise.
-    """
+def _wired_check_against_absent_runtime(native_core: Any, *, enforce: bool) -> None:
     from uuid import uuid4
 
     from agent_assembly.adapters.langchain import AssemblyCallbackHandler
@@ -367,10 +361,8 @@ def test_wired_check_fails_open_when_runtime_unreachable(native_core: Any) -> No
 
     client = native_core.RuntimeClient.connect(socket_path)
     try:
-        interceptor = RuntimeQueryInterceptor(object(), client, "agent-001")
-        handler = AssemblyCallbackHandler(interceptor)
-        # Must not raise: fail-open.
-        handler.on_tool_start(
+        interceptor = RuntimeQueryInterceptor(object(), client, "agent-001", enforce=enforce)
+        AssemblyCallbackHandler(interceptor).on_tool_start(
             serialized={"name": "web_search"},
             input_str="query",
             run_id=uuid4(),
@@ -380,6 +372,21 @@ def test_wired_check_fails_open_when_runtime_unreachable(native_core: Any) -> No
     finally:
         client.close()
         socket_dir.cleanup()
+
+
+@pytest.mark.integration
+def test_wired_check_fails_closed_when_runtime_unreachable_under_enforce(native_core: Any) -> None:
+    """AAASM-3920: no reachable runtime under enforce => on_tool_start blocks the tool."""
+    from agent_assembly.exceptions import ToolExecutionBlockedError
+
+    with pytest.raises(ToolExecutionBlockedError):
+        _wired_check_against_absent_runtime(native_core, enforce=True)
+
+
+@pytest.mark.integration
+def test_wired_check_proceeds_when_runtime_unreachable_while_observing(native_core: Any) -> None:
+    """Paired control: same absent runtime, only the posture differs => the tool proceeds."""
+    _wired_check_against_absent_runtime(native_core, enforce=False)
 
 
 @pytest.mark.integration
