@@ -7,6 +7,8 @@ on:
       # FFI-binding Python files that import the native `_core` module.
       - "agent_assembly/__init__.py"
       - "agent_assembly/types.py"
+      # The modules test_native_core_runtime.py drives through `_core`.
+      - "agent_assembly/core/**"
       - "test/integration/test_native_core_runtime.py"
       - ".github/workflows/native-core-build.yml"
   workflow_dispatch:
