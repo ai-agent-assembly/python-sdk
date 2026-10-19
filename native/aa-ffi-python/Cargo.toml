@@ -23,7 +23,7 @@ aa-core = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev
 aa-proto = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-proto" }
 aa-sdk-client = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-sdk-client" }
 prost = "0.14"
-pyo3 = { version = "0.29", features = ["extension-module"] }
+pyo3 = { version = "0.30", features = ["extension-module"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # `AssemblyClient::register` is async (tonic gRPC). The shim's `register`
