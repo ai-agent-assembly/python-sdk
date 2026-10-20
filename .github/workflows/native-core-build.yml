@@ -7,6 +7,9 @@ on:
       # FFI-binding Python files that import the native `_core` module.
       - "agent_assembly/__init__.py"
       - "agent_assembly/types.py"
+      # The modules test_native_core_runtime.py drives through `_core`.
+      - "agent_assembly/core/**"
+      - "test/integration/test_native_core_runtime.py"
       - ".github/workflows/native-core-build.yml"
   workflow_dispatch:
 
@@ -53,3 +56,17 @@ jobs:
       - name: Verify native module import
         run: |
           uv run python -c "from agent_assembly._core import RuntimeClient, GovernanceEvent"
+
+      # AAASM-6359: this file skips itself unless the gate variable is "1", and a
+      # skip exits 0, so a typo'd/removed variable would turn the job into a
+      # silent pass. `-o addopts=""` drops pytest.ini's `--reruns 1` (a retry
+      # would hide a flaky timing assertion) and the coverage plugins; the
+      # junit check fails the job if anything was skipped.
+      - name: Run native core runtime tests
+        env:
+          AAASM_RUN_NATIVE_CORE_TESTS: "1"
+        run: |
+          uv run --with pytest python -m pytest -o addopts="" -rs \
+            --junitxml=native-core-runtime.xml \
+            test/integration/test_native_core_runtime.py
+          grep -q 'skipped="0"' native-core-runtime.xml
