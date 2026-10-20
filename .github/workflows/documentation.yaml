@@ -208,7 +208,7 @@ jobs:
       # PEP-440 pyproject version, which loses the canonical tag form). Pull it
       # so the deploy script can label the frozen snapshot and pick the channel.
       - name: Download release-tag artifact from the release run
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8
         with:
           name: release-tag
           path: release-tag-artifact
