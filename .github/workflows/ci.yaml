@@ -80,9 +80,22 @@ jobs:
 
   # AAASM-3612: advisory gate. Fail CI when a (possibly transitive) dependency
   # in the locked set carries a known advisory, so a poisoned dep cannot ride
-  # into a release through uv.lock. pip-audit resolves the synced environment
-  # against the PyPI Advisory + OSV databases; a non-empty result exits
-  # non-zero and fails the job.
+  # into a release through uv.lock. pip-audit audits whichever environment it is
+  # itself running in, against the PyPI Advisory + OSV databases; a non-empty
+  # result exits non-zero and fails the job.
+  #
+  # AAASM-6251: that last sentence is why the audit MUST run through
+  # `uv run --frozen --with`, and must not go back to `uvx`. `uvx` deliberately
+  # builds the tool its own throwaway environment, so `uvx pip-audit` audited
+  # pip-audit's own ~29 dependencies and never looked at the 194 packages the
+  # step above had just synced. The gate was therefore structurally incapable of
+  # failing on a project dependency, and it did not: it was green on every
+  # commit while this repository carried 24 open Dependabot alerts against
+  # uv.lock, one of them critical.
+  #
+  # `--path .venv/lib/python<X.Y>/site-packages` is not an alternative. It is
+  # silent on a path that does not exist, so the day the interpreter version
+  # moves, the gate goes back to passing vacuously with no error at all.
   dependency-audit:
     name: Dependency advisory audit (pip-audit)
     runs-on: ubuntu-latest
@@ -97,17 +110,24 @@ jobs:
         run: uv sync --frozen
       - name: Run pip-audit advisory gate
         # Documented allowlist for advisories with NO available fix, mirroring
-        # go-sdk's KNOWN_UNFIXED. Add an entry ONLY when there is no fixed
-        # release, with a dated rationale, in the form:
-        #   --ignore-vuln GHSA-xxxx-xxxx-xxxx  # <date> <reason; awaiting fix>
-        # The list starts empty: every known-vuln dependency fails the gate.
+        # go-sdk's KNOWN_UNFIXED. Add an `--ignore-vuln <ID>` flag ONLY when
+        # there is no fixed release, and put a dated rationale and a removal
+        # condition in a comment immediately above it, as done below.
+        #
+        # `--frozen` keeps `uv run` from touching uv.lock, so the audited set is
+        # exactly the locked set rather than a fresh resolution.
         run: |
           set -euo pipefail
-          uvx pip-audit \
+          # PYSEC-2026-3740 - nltk, reached transitively through
+          # llama-index-core in the dev group. As of 2026-10-02 the locked
+          # 3.10.3 is the newest nltk release on PyPI and no fixed release
+          # exists, so the gate cannot be satisfied by a bump.
+          # REMOVE this flag once nltk publishes a release that fixes it and
+          # uv.lock picks that version up.
+          uv run --frozen --with pip-audit pip-audit \
             --strict \
-            --desc
-          # To allowlist an unfixable advisory, append flags above, e.g.:
-          #   --ignore-vuln GHSA-xxxx-xxxx-xxxx  # 2026-06-23 no fixed release yet
+            --desc \
+            --ignore-vuln PYSEC-2026-3740
 
   # AAASM-4034: dedicated leg that installs `langchain-core` (the non-default
   # `langchain-test` group) so the AAASM-4014 `__getattr__` is exercised against
