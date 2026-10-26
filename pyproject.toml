@@ -198,7 +198,7 @@ pre-commit-ci = [
 #   .venv/bin/python -m pytest test/unit/adapters/langchain/test_getattr_contract_with_langchain.py
 langchain-test = [
     { include-group = "test" },
-    "langchain-core>=1.4.9,<1.7.0",
+    "langchain-core>=1.4.9,<1.8.0",
 ]
 docs = [
     "mkdocs>=1.6.0,<2",
