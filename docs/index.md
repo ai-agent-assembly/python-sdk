@@ -26,7 +26,7 @@ The SDK does not replace your agent framework — it **intercepts** it. When you
 `init_assembly()`, the SDK detects which supported framework is importable in your process
 and installs its adapter. **For LangChain,** `init_assembly()` only creates the callback handler,
 and LangChain runs a tool ungoverned unless you pass it as `callbacks=[...]` (see the README
-Quick Start). For other frameworks, check that framework's adapter page for what it requires. Today it ships adapters for **LangChain, LangGraph, CrewAI, OpenAI Agents,
+Quick Start). For other frameworks, see [Framework support](examples/framework-support.md) and that framework's example page for what it requires. Today it ships adapters for **LangChain, LangGraph, CrewAI, OpenAI Agents,
 Pydantic AI, Google ADK, and MCP servers**.
 
 ```mermaid
