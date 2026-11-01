@@ -11,7 +11,7 @@
 [![Code style: ruff](https://img.shields.io/badge/style-ruff-261230?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 [![Type-checked: mypy](https://img.shields.io/badge/types-mypy-2a6db2?logo=python&logoColor=white)](https://mypy-lang.org/)
 
-Python SDK for **AI Agent Assembly** — a governance-native runtime for AI agents. One `init_assembly()` call wires your agent into the policy gateway and applies pre-execution allow/deny on tool calls, without changing how the agent itself is written.
+Python SDK for **AI Agent Assembly** — a governance-native runtime for AI agents. `init_assembly()` registers your agent with the policy gateway and installs the framework adapters; the adapters apply pre-execution allow/deny on tool calls. For most frameworks the adapter patches the framework's tool entry point, so the agent needs no change. **LangChain is the exception: it must be handed the SDK's callback handler** (see [Quick Start](#quick-start)).
 
 > **The SDK hands records to the runtime; it does not give you an audit trail.** The framework adapters offer a governed call's outcome to an audit hook on the governance interceptor, and over a connected runtime that hook writes it to the native event channel — the same one agent registration uses. That is a handoff, **not** evidence: the send is unacknowledged, so this SDK cannot tell you the record arrived, and does not claim it did. Downstream, [AAASM-5783](https://lightning-dust-mite.atlassian.net/browse/AAASM-5783) is open on `report_event` payloads reaching neither the live stream nor the durable entry — until it lands, no SDK can claim ADR 0033 §6 *Observed*. Without a reachable runtime there is no channel at all and nothing is emitted.
 >
@@ -162,7 +162,10 @@ with init_assembly(
     api_key="dev-key",
     agent_id="quickstart-agent",
     mode="sdk-only",
-):
+) as ctx:
+    # init_assembly() does NOT hook LangChain by itself. LangChain only calls a
+    # callback handler it is given, so pass the SDK's handler on every run.
+    handler = next(a for a in ctx.adapters if a.get_framework_name() == "langchain").get_callback_handler()
     llm = FakeListLLM(responses=[
         "Thought: I should look up the user.\nAction: whoami\nAction Input: alice\n",
         "Thought: I have the answer.\nFinal Answer: alice is in engineering\n",
@@ -172,14 +175,21 @@ with init_assembly(
         "Use the tools.\n{tools}\nTool names: {tool_names}\nQ: {input}\n{agent_scratchpad}"
     )
     executor = AgentExecutor(agent=create_react_agent(llm, tools, prompt), tools=tools, max_iterations=2)
-    print(executor.invoke({"input": "Which team is alice on?"})["output"])
+    result = executor.invoke(
+        {"input": "Which team is alice on?"},
+        config={"callbacks": [handler]},  # <- this is what puts the policy gate in front of each tool
+    )
+    print(result["output"])
 ```
 
 What this does:
 
-1. `init_assembly()` registers the agent with the gateway and auto-loads the LangChain adapter — each tool call the wrapped agent makes from now on goes through the policy gate.
-2. The `FakeListLLM` replays canned responses so the example runs **offline** with no real LLM.
-3. The `with` block tears down the gateway connection and unwinds adapter hooks on exit.
+1. `init_assembly()` registers the agent with the gateway and activates the LangChain adapter, which creates one `AssemblyCallbackHandler` (`adapter.get_callback_handler()`). It installs **no** hook into LangChain itself.
+2. `config={"callbacks": [handler]}` is what routes each tool call through the policy gate. The handler runs before the tool and raises `ToolExecutionBlockedError` on a deny, so a denied tool's body does not run. **Without this argument a LangChain tool runs regardless of policy**, even though `init_assembly()` succeeded and reports the adapter as active.
+3. The `FakeListLLM` replays canned responses so the example runs **offline** with no real LLM.
+4. The `with` block tears down the gateway connection and unwinds adapter hooks on exit.
+
+> **What `init_assembly()` alone does not enforce.** It does not govern LangChain tool calls (pass the handler as above), and an offline `sdk-only` run has no gateway policy authority to ask unless a native runtime is reachable. `test/unit/test_quickstart_langchain_denied_tool_wiring.py` pins the wiring: a denied tool run with the handler leaves no side effect, and the same tool run without it executes.
 
 ## Public API
 
@@ -190,8 +200,10 @@ What this does:
 Agent **registration** and the **pre-execution policy check** are not REST
 calls: the SDK goes through the native `aa-sdk-client` shim to the core over
 gRPC/UDS (ADR 0004) — it never calls a core HTTP endpoint directly for those.
-`init_assembly` registers the agent on startup, and a tool call is checked via
-the native `query_policy` so a `deny` blocks it before the tool runs.
+`init_assembly` registers the agent on startup, and a tool call that reaches an
+adapter hook (for LangChain, only when the callback handler is passed in
+`callbacks`) is checked via the native `query_policy` so a `deny` blocks it
+before the tool runs.
 
 ### Control-plane routing
 
