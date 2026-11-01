@@ -1,8 +1,8 @@
 # Agent Assembly Python SDK
 
 **In plain terms:** this SDK is how a Python agent asks for permission before it acts.
-You wrap your existing agent in one `init_assembly()` call, and from that point on each
-tool call your agent makes is checked against a governance policy — allowed or denied —
+You wrap your existing agent in one `init_assembly()` call, and each
+tool call that reaches an installed adapter hook is checked against a governance policy — allowed or denied —
 without you rewriting a single line of the agent itself. Over a connected runtime the
 outcome of each call is also handed to the runtime's event channel (see below).
 
@@ -24,8 +24,9 @@ You keep writing agents the way you always have. The SDK is the seatbelt you cli
 
 The SDK does not replace your agent framework — it **intercepts** it. When you call
 `init_assembly()`, the SDK detects which supported framework is importable in your process
-and monkey-patches that framework's tool-call entry points so each call passes through a
-policy gate first. Today it ships adapters for **LangChain, LangGraph, CrewAI, OpenAI Agents,
+and installs its adapter. **For LangChain,** `init_assembly()` only creates the callback handler,
+and LangChain runs a tool ungoverned unless you pass it as `callbacks=[...]` (see the README
+Quick Start). For other frameworks, see [Framework support](examples/framework-support.md) and that framework's example page for what it requires. Today it ships adapters for **LangChain, LangGraph, CrewAI, OpenAI Agents,
 Pydantic AI, Google ADK, and MCP servers**.
 
 ```mermaid

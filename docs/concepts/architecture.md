@@ -24,7 +24,7 @@ The SDK governs *third-party* agent frameworks (LangChain, LangGraph, CrewAI, Op
 
 - `get_framework_name() -> str` — the framework's import name (e.g. `"langchain"`).
 - `get_supported_versions() -> list[str]` — PEP 440 version specifiers.
-- `register_hooks(interceptor) -> None` — install monkey-patches that route framework calls through the governance interceptor.
+- `register_hooks(interceptor) -> None` — install monkey-patches that route framework calls through the governance interceptor (except LangChain, which only gets a callback handler; see below).
 - `unregister_hooks() -> None` — revert all patches in reverse install order. Must be idempotent.
 
 Adapter authors target this contract and nothing else. The public boundary is intentionally narrow so that adding a new framework does not require changes to the gateway client, the policy interceptor, or the registry's selection logic.
@@ -37,9 +37,11 @@ Priority matters because two frameworks can coexist in the same process — e.g.
 
 ### Per-framework patches — the actual monkey-patching
 
+(LangChain is the exception: its adapter patches nothing; see the first bullet below.)
+
 Each adapter's `register_hooks()` delegates to one or more `RuntimePatch` objects (a `Protocol` defined in `agent_assembly.core.assembly`). A `RuntimePatch` knows how to apply and revert a single monkey-patch on a specific framework class or function. Examples:
 
-- `agent_assembly.adapters.langchain.patch.LangChainPatch` — patches `BaseTool._run` and `BaseTool._arun` so every tool invocation passes through the governance gate.
+- `agent_assembly.adapters.langchain.patch.LangChainPatch` — does **not** patch `BaseTool`. It only creates and stores the `AssemblyCallbackHandler` (`runtime.auto_inject_callback_handler`); a LangChain tool is governed only when that handler is passed as `callbacks=[...]`.
 - `agent_assembly.adapters.langchain.langgraph_patch.patch_stategraph_compile` — wraps `StateGraph.compile()` so the resulting graph's nodes are wrapped before any invocation.
 - `agent_assembly.adapters.crewai.patch.CrewAIPatch` — analogous wrappers for CrewAI's tool invocation entry points.
 
@@ -54,7 +56,7 @@ flowchart LR
     Registry["AdapterRegistry<br/>get_available_adapters_by_priority()"]
     Adapter["FrameworkAdapter<br/>(LangChainAdapter, CrewAIAdapter, …)"]
     Patch["RuntimePatch<br/>(LangChainPatch, CrewAIPatch, …)"]
-    Framework["Third-party framework<br/>(BaseTool._run, StateGraph.compile, …)"]
+    Framework["Third-party framework<br/>(e.g. StateGraph.compile; LangChain is not patched)"]
     Interceptor["GovernanceInterceptor"]
     Gateway["Gateway / policy engine"]
 
