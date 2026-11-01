@@ -38,14 +38,14 @@ all hooks are removed in reverse order.
 ## Supported frameworks
 
 Each framework below ships an adapter under `agent_assembly/adapters/`. The
-**Runnable example** column reflects whether a complete, validated example exists today —
+**Runnable example** column reflects whether a complete, validated example exists today (the LangChain row states its own, narrower status) —
 either inline in this guide or as a curated script in the central
 [`examples`](https://github.com/ai-agent-assembly/examples/tree/master/python)
 repository.
 
 | Framework | Adapter | Runnable example |
 | --- | --- | --- |
-| LangChain | `agent_assembly.adapters.langchain` | ✅ Validated — see [Quick start](#langchain-quick-start) below (runs offline against a mock LLM), plus the [LangChain basic agent](langchain-basic-agent.md) and [LangChain research agent](langchain-research-agent.md) pages. |
+| LangChain | `agent_assembly.adapters.langchain` | Example pages present; the callback wiring is pinned by a unit test on a bare tool, but the `AgentExecutor` quick-start snippet has not been run — see [Quick start](#langchain-quick-start) below, plus the [LangChain basic agent](langchain-basic-agent.md) and [LangChain research agent](langchain-research-agent.md) pages. |
 | LangGraph | `agent_assembly.adapters.langgraph` | ✅ Validated — see [LangGraph node-level governance](langgraph.md) (state-graph governance; wraps the compiled `StateGraph`). |
 | CrewAI | `agent_assembly.adapters.crewai` | ✅ Validated — see [CrewAI research crew](crewai-research-crew.md) (multi-agent crew). |
 | OpenAI Agents | `agent_assembly.adapters.openai_agents` | ✅ Validated — see [OpenAI Agents SDK](openai-agents-sdk.md). |

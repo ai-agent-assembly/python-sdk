@@ -4,7 +4,7 @@ Integrate Agent Assembly with LangChain to enforce governance policy on tool cal
 
 ## What this example demonstrates
 
-This example wires Agent Assembly governance into a LangChain agent so that each tool call the agent makes is checked against policy *before* the tool runs. It covers:
+This example wires Agent Assembly governance into a LangChain agent so that each tool call the agent makes is checked against policy *before* the tool runs. The example calls the `AssemblyCallbackHandler` explicitly; LangChain does not govern a tool unless the handler is passed in `callbacks`. It covers:
 
 - Initializing Agent Assembly with `init_assembly()`.
 - Wrapping LangChain tools with `AssemblyCallbackHandler` + a governance interceptor.

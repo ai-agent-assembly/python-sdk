@@ -36,8 +36,9 @@ Assembly**. It does this with a three-layer pattern:
    each one's `is_available()` to see if its framework is importable in this process, and
    returns the available ones in priority order.
 3. **Per-framework patches** — each adapter's `register_hooks()` installs one or more
-   `RuntimePatch` objects. Most adapters patch framework entry points; the LangChain adapter does
-   not patch `BaseTool` — it only creates a callback handler that you pass as `callbacks`.
+   `RuntimePatch` objects. Some adapters patch framework entry points (for example the Agno adapter patches
+   `FunctionCall.execute` and the LangGraph adapter wraps `StateGraph.compile`); the LangChain
+   adapter does not patch `BaseTool` — it only creates a callback handler that you pass as `callbacks`.
 
 `init_assembly()` calls `AdapterRegistry.get_available_adapters_by_priority()` exactly once at
 startup — this is the **single detection path** (see [ADR-0001](../development/adr/0001-hook-architecture.md)).
