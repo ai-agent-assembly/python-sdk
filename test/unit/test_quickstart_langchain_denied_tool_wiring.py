@@ -8,12 +8,14 @@ into LangChain itself. LangChain only calls a handler it is handed through
 ``callbacks=[...]``, so an un-wired tool runs whatever the policy says. The
 corrected Quick Start therefore passes the handler explicitly.
 
-What runs here is the corrected Quick Start's configuration: the real
-``init_assembly`` (real ``RuntimeQueryInterceptor``, fake native runtime as the
-decision source, as in ``test_quickstart_negative_control.py``), the handler taken
-from the langchain adapter on the returned context, and a real
-``langchain_core`` tool invoked through LangChain's own callback manager. The
-tool body writes a file, so a deny is asserted as the absence of that file.
+What runs here: the real ``init_assembly`` (real ``RuntimeQueryInterceptor``, fake
+native runtime as the decision source, as in ``test_quickstart_negative_control.py``),
+the handler taken from the langchain adapter on the returned context, and a bare
+``langchain_core`` ``StructuredTool`` invoked through LangChain's own callback
+manager. The tool body writes a file, so a deny is asserted as the absence of that
+file. This proves the handler-wiring mechanism the Quick Start relies on; it does
+NOT run ``AgentExecutor``/``create_react_agent``, so propagation of
+``config={"callbacks": [...]}`` through an agent executor is not verified here.
 
 * ``test_denied_tool_without_wiring_still_executes`` is the negative control and
   documents the gap: same init, same deny, handler not passed, file written.
@@ -111,7 +113,7 @@ def _write_tool(effect: FileSideEffect) -> StructuredTool:
 
 def test_denied_tool_without_wiring_still_executes(denied: tuple[Any, Any], file_effect: FileSideEffect) -> None:
     """init_assembly() alone does not gate a LangChain tool: the gap the old README hid."""
-    context, handler = denied
+    _, handler = denied
     assert handler is not None
 
     result = _write_tool(file_effect).invoke({"content": "ungated"})
@@ -122,7 +124,7 @@ def test_denied_tool_without_wiring_still_executes(denied: tuple[Any, Any], file
 
 
 def test_denied_tool_with_wiring_has_no_side_effect(denied: tuple[Any, Any], file_effect: FileSideEffect) -> None:
-    context, handler = denied
+    _, handler = denied
 
     with pytest.raises(ToolExecutionBlockedError, match=_DENY_REASON):
         _write_tool(file_effect).invoke({"content": "denied"}, config={"callbacks": [handler]})
@@ -132,7 +134,7 @@ def test_denied_tool_with_wiring_has_no_side_effect(denied: tuple[Any, Any], fil
 
 
 def test_allowed_tool_with_wiring_executes(allowed: tuple[Any, Any], file_effect: FileSideEffect) -> None:
-    context, handler = allowed
+    _, handler = allowed
 
     result = _write_tool(file_effect).invoke({"content": "allowed"}, config={"callbacks": [handler]})
 

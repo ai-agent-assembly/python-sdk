@@ -11,7 +11,7 @@
 [![Code style: ruff](https://img.shields.io/badge/style-ruff-261230?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 [![Type-checked: mypy](https://img.shields.io/badge/types-mypy-2a6db2?logo=python&logoColor=white)](https://mypy-lang.org/)
 
-Python SDK for **AI Agent Assembly** — a governance-native runtime for AI agents. `init_assembly()` registers your agent with the policy gateway and installs the framework adapters; the adapters apply pre-execution allow/deny on tool calls. For most frameworks the adapter patches the framework's tool entry point, so the agent needs no change. **LangChain is the exception: it must be handed the SDK's callback handler** (see [Quick Start](#quick-start)).
+Python SDK for **AI Agent Assembly** — a governance-native runtime for AI agents. `init_assembly()` registers your agent with the policy gateway and installs the framework adapters; the adapters apply pre-execution allow/deny on tool calls. **For LangChain, `init_assembly()` alone does not govern tool calls: you must pass the SDK's callback handler** (see [Quick Start](#quick-start)). For other frameworks, check that framework's adapter page for what it requires.
 
 > **The SDK hands records to the runtime; it does not give you an audit trail.** The framework adapters offer a governed call's outcome to an audit hook on the governance interceptor, and over a connected runtime that hook writes it to the native event channel — the same one agent registration uses. That is a handoff, **not** evidence: the send is unacknowledged, so this SDK cannot tell you the record arrived, and does not claim it did. Downstream, [AAASM-5783](https://lightning-dust-mite.atlassian.net/browse/AAASM-5783) is open on `report_event` payloads reaching neither the live stream nor the durable entry — until it lands, no SDK can claim ADR 0033 §6 *Observed*. Without a reachable runtime there is no channel at all and nothing is emitted.
 >
@@ -165,7 +165,10 @@ with init_assembly(
 ) as ctx:
     # init_assembly() does NOT hook LangChain by itself. LangChain only calls a
     # callback handler it is given, so pass the SDK's handler on every run.
-    handler = next(a for a in ctx.adapters if a.get_framework_name() == "langchain").get_callback_handler()
+    adapter = next((a for a in ctx.adapters if a.get_framework_name() == "langchain"), None)
+    if adapter is None:
+        raise RuntimeError("LangChain adapter is not active: is `langchain` importable?")
+    handler = adapter.get_callback_handler()
     llm = FakeListLLM(responses=[
         "Thought: I should look up the user.\nAction: whoami\nAction Input: alice\n",
         "Thought: I have the answer.\nFinal Answer: alice is in engineering\n",
