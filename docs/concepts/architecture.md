@@ -39,7 +39,7 @@ Priority matters because two frameworks can coexist in the same process — e.g.
 
 Each adapter's `register_hooks()` delegates to one or more `RuntimePatch` objects (a `Protocol` defined in `agent_assembly.core.assembly`). A `RuntimePatch` knows how to apply and revert a single monkey-patch on a specific framework class or function. Examples:
 
-- `agent_assembly.adapters.langchain.patch.LangChainPatch` — patches `BaseTool._run` and `BaseTool._arun` so every tool invocation passes through the governance gate.
+- `agent_assembly.adapters.langchain.patch.LangChainPatch` — does **not** patch `BaseTool`. It only creates and stores the `AssemblyCallbackHandler` (`runtime.auto_inject_callback_handler`); a LangChain tool is governed only when that handler is passed as `callbacks=[...]`.
 - `agent_assembly.adapters.langchain.langgraph_patch.patch_stategraph_compile` — wraps `StateGraph.compile()` so the resulting graph's nodes are wrapped before any invocation.
 - `agent_assembly.adapters.crewai.patch.CrewAIPatch` — analogous wrappers for CrewAI's tool invocation entry points.
 
