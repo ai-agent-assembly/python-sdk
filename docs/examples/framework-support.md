@@ -30,8 +30,10 @@ with init_assembly(
     ...
 ```
 
-Inside the `with` block, the relevant adapter has monkey-patched the framework's tool-call
-entry points. On exit, all hooks are removed in reverse order.
+Inside the `with` block, each importable framework's adapter has registered its hooks. What a
+hook governs depends on the framework: LangChain gets only a callback handler that you must pass
+as `callbacks` (see the LangChain quick start below), so run your agent with that wiring. On exit,
+all hooks are removed in reverse order.
 
 ## Supported frameworks
 
@@ -58,7 +60,9 @@ repository.
 
 !!! note "Adapter present vs. example present"
     Every framework above has an **adapter that is implemented and registered** — `init_assembly()`
-    will detect and hook the framework whenever it's installed, regardless of the example status.
+    activates it whenever the framework is importable, regardless of the example status. What an
+    adapter then governs differs per framework: for LangChain, `init_assembly()` only creates the
+    callback handler and you must pass it as `callbacks` (see the quick start below).
     A ✅ row additionally has a curated, end-to-end runnable example you can clone and run. A ⏳ row
     (currently only MCP servers) means the adapter ships but a runnable example is not yet vendored.
     Contributions adding one are welcome; see
@@ -86,7 +90,13 @@ with init_assembly(
     api_key="dev-key",
     agent_id="quickstart-agent",
     mode="sdk-only",
-):
+) as ctx:
+    # init_assembly() does NOT hook LangChain by itself. LangChain only calls a
+    # callback handler it is given, so pass the SDK's handler on every run.
+    adapter = next((a for a in ctx.adapters if a.get_framework_name() == "langchain"), None)
+    if adapter is None:
+        raise RuntimeError("LangChain adapter is not active: is `langchain` importable?")
+    handler = adapter.get_callback_handler()
     llm = FakeListLLM(responses=[
         "Thought: I should look up the user.\nAction: whoami\nAction Input: alice\n",
         "Thought: I have the answer.\nFinal Answer: alice is in engineering\n",
@@ -96,11 +106,17 @@ with init_assembly(
         "Use the tools.\n{tools}\nTool names: {tool_names}\nQ: {input}\n{agent_scratchpad}"
     )
     executor = AgentExecutor(agent=create_react_agent(llm, tools, prompt), tools=tools, max_iterations=2)
-    print(executor.invoke({"input": "Which team is alice on?"})["output"])
+    result = executor.invoke(
+        {"input": "Which team is alice on?"},
+        config={"callbacks": [handler]},  # <- this is what puts the policy gate in front of each tool
+    )
+    print(result["output"])
 ```
 
-The same snippet lives in the repository [README](https://github.com/ai-agent-assembly/python-sdk#quick-start)
-and is the canonical, validated example. See the [`examples/`](https://github.com/ai-agent-assembly/python-sdk/tree/master/examples)
+Without `config={"callbacks": [handler]}` a LangChain tool runs regardless of policy. The wiring
+mechanism is pinned by `test/unit/test_quickstart_langchain_denied_tool_wiring.py` (a bare
+`langchain_core` tool; this exact `AgentExecutor` snippet has not been run). The same snippet
+lives in the repository [README](https://github.com/ai-agent-assembly/python-sdk#quick-start). See the [`examples/`](https://github.com/ai-agent-assembly/python-sdk/tree/master/examples)
 directory for additional in-repo runnable scripts and their status.
 
 ## More runnable examples
