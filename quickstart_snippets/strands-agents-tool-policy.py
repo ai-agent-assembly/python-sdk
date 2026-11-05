@@ -7,6 +7,9 @@ with init_assembly(
     api_key=api_key,
     agent_id="strands-demo-agent",
     mode="sdk-only",
+    # No gateway here: the default posture fails closed when registration
+    # can't reach one, so an offline demo must name its dry-run posture.
+    enforcement_mode="observe",
 ) as ctx:
     print(f"  Agent:    {ctx.client.agent_id}")
     print(f"  Gateway:  {ctx.client.gateway_url}")
