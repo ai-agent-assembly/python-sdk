@@ -119,6 +119,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="agno-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -165,6 +168,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="autogen-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -196,6 +202,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="crewai-research-crew",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -235,6 +244,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="custom-tool-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -271,6 +283,9 @@ with no API keys and no outbound network.
             api_key=api_key,
             agent_id="google-adk-demo-agent",
             mode="sdk-only",
+            # No gateway here: the default posture fails closed when registration
+            # can't reach one, so an offline demo must name its dry-run posture.
+            enforcement_mode="observe",
         ) as ctx:
             print(f"  Agent:    {ctx.client.agent_id}")
             print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -299,6 +314,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="haystack-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -344,6 +362,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="langchain-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -375,6 +396,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="langchain-research-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -407,6 +431,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="langgraph-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -444,6 +471,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="llamaindex-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -507,6 +537,9 @@ with no API keys and no outbound network.
             api_key=api_key,
             agent_id="microsoft-agent-framework-demo-agent",
             mode="sdk-only",
+            # No gateway here: the default posture fails closed when registration
+            # can't reach one, so an offline demo must name its dry-run posture.
+            enforcement_mode="observe",
         ) as ctx:
             print(f"  Agent:    {ctx.client.agent_id}")
             print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -536,6 +569,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="openai-agents-demo",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -564,6 +600,9 @@ with no API keys and no outbound network.
             api_key=api_key,
             agent_id="pydantic-ai-demo-agent",
             mode="sdk-only",
+            # No gateway here: the default posture fails closed when registration
+            # can't reach one, so an offline demo must name its dry-run posture.
+            enforcement_mode="observe",
         ) as ctx:
             print(f"  Agent:    {ctx.client.agent_id}")
             print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -592,6 +631,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="semantic-kernel-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -621,6 +663,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="smolagents-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
@@ -653,6 +698,9 @@ with no API keys and no outbound network.
         api_key=api_key,
         agent_id="strands-demo-agent",
         mode="sdk-only",
+        # No gateway here: the default posture fails closed when registration
+        # can't reach one, so an offline demo must name its dry-run posture.
+        enforcement_mode="observe",
     ) as ctx:
         print(f"  Agent:    {ctx.client.agent_id}")
         print(f"  Gateway:  {ctx.client.gateway_url}")
