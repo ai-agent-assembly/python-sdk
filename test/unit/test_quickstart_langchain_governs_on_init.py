@@ -30,7 +30,7 @@ pytest.importorskip("langchain_core")
 from langchain_core.tools import StructuredTool  # noqa: E402
 
 from agent_assembly import init_assembly  # noqa: E402
-from agent_assembly.adapters.langchain import LangChainAdapter  # noqa: E402
+from agent_assembly.adapters.langchain import AssemblyCallbackHandler, LangChainAdapter  # noqa: E402
 from agent_assembly.core import assembly as core_assembly  # noqa: E402
 from agent_assembly.exceptions import ToolExecutionBlockedError  # noqa: E402
 
@@ -150,6 +150,66 @@ def test_explicit_handler_is_not_checked_twice(init: Any, file_effect: FileSideE
     assert len(runtime.query_calls) == 1
 
 
+class _AllowAllInterceptor:
+    """A weaker interceptor an app might build its own handler around."""
+
+    def check_tool_start(self, **_kwargs: object) -> dict[str, str]:
+        return {"status": "allow"}
+
+
+def test_explicit_handler_with_a_weaker_interceptor_does_not_suppress_governance(
+    init: Any, file_effect: FileSideEffect
+) -> None:
+    init(decision="deny")
+    weak = AssemblyCallbackHandler(_AllowAllInterceptor())
+
+    with pytest.raises(ToolExecutionBlockedError, match=_DENY_REASON):
+        _write_tool(file_effect).invoke({"content": "x"}, config={"callbacks": [weak]})
+
+    assert file_effect.occurred() is False
+
+
+def test_denied_call_offers_its_record_to_the_audit_hook(
+    init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    context, _ = init(decision="deny")
+    adapter = next(a for a in context.adapters if isinstance(a, LangChainAdapter))
+    interceptor = adapter.get_callback_handler()._interceptor
+    records: list[dict[str, Any]] = []
+
+    def _record(*, tool_name: str, result: object, **extra: Any) -> None:
+        records.append({"tool_name": tool_name, "result": result, **extra})
+
+    monkeypatch.setattr(interceptor, "record_result", _record, raising=False)
+
+    with pytest.raises(ToolExecutionBlockedError):
+        _write_tool(file_effect).invoke({"content": "x"})
+
+    assert len(records) == 1
+    assert records[0]["tool_name"] == "write_to_disk"
+    assert records[0]["result"] == _DENY_REASON
+    assert records[0].get("denied") is True
+    assert isinstance(records[0].get("run_id"), str) and records[0]["run_id"]
+
+
+def test_langgraph_tool_node_is_governed(init: Any, file_effect: FileSideEffect) -> None:
+    pytest.importorskip("langgraph.prebuilt")
+    from langchain_core.messages import AIMessage
+    from langgraph.graph import START, MessagesState, StateGraph
+    from langgraph.prebuilt import ToolNode
+
+    init(decision="deny")
+    call = AIMessage(content="", tool_calls=[{"name": "write_to_disk", "args": {"content": "x"}, "id": "c1"}])
+
+    with pytest.raises(ToolExecutionBlockedError):
+        graph = StateGraph(MessagesState)
+        graph.add_node("tools", ToolNode([_write_tool(file_effect)]))
+        graph.add_edge(START, "tools")
+        graph.compile().invoke({"messages": [call]})
+
+    assert file_effect.occurred() is False
+
+
 def test_runtime_query_failure_under_enforce_blocks_the_tool(
     init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -160,7 +220,7 @@ def test_runtime_query_failure_under_enforce_blocks_the_tool(
 
     monkeypatch.setattr(runtime, "query_policy", _unreachable)
 
-    with pytest.raises(Exception):  # noqa: B017, PT011 - any raise is a block; the tool must not run
+    with pytest.raises(ToolExecutionBlockedError, match="runtime query failed"):
         _write_tool(file_effect).invoke({"content": "must not run"})
 
     assert file_effect.occurred() is False
