@@ -27,7 +27,12 @@ from contextvars import ContextVar
 from threading import Lock
 from typing import Any
 
-from agent_assembly.adapters.langchain.callback_handler import AssemblyCallbackHandler, consume_checked_run
+from agent_assembly.adapters.langchain.callback_handler import (
+    AssemblyCallbackHandler,
+    consume_checked_run,
+    consume_end_skipped,
+    mark_end_skipped,
+)
 from agent_assembly.adapters.langchain.runtime import get_active_callback_handler
 
 
@@ -48,13 +53,23 @@ class ProcessGovernanceHandler(AssemblyCallbackHandler):
             return
         run_id = kwargs.get("run_id")
         if run_id is not None and consume_checked_run(run_id) is active._interceptor:
+            mark_end_skipped(run_id)
             return
         active.on_tool_start(serialized, input_str, **kwargs)
 
     def on_tool_end(self, output: Any, **kwargs: Any) -> None:
+        run_id = kwargs.get("run_id")
+        if run_id is not None and consume_end_skipped(run_id):
+            return
         active = get_active_callback_handler()
         if active is not None:
             active.on_tool_end(output, **kwargs)
+
+    def on_tool_error(self, _error: BaseException, **kwargs: Any) -> None:
+        # Only clears the per-run mark so a failed tool does not leak it.
+        run_id = kwargs.get("run_id")
+        if run_id is not None:
+            consume_end_skipped(run_id)
 
 
 _REGISTER_LOCK = Lock()
