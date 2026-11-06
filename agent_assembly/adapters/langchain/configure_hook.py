@@ -10,8 +10,11 @@ Two properties of the registration matter for governance:
   being ``set()`` by ``init_assembly``. A value ``set()`` in one context is invisible to
   a plain ``threading.Thread`` (threads start with an empty context), so a tool run
   there would silently skip the gate. A default is seen from every thread and task.
-* ``handle_class=AssemblyCallbackHandler`` makes LangChain skip the proxy when the app
-  already passed an ``AssemblyCallbackHandler`` itself, so a tool is not checked twice.
+* The proxy skips a run only when an explicitly passed ``AssemblyCallbackHandler`` already
+  allowed it with the *active* interceptor, so a tool is not checked twice. A handler built
+  around a weaker or different interceptor never suppresses the active governance
+  (registering with ``handle_class`` would have: LangChain then skips the proxy for any
+  ``AssemblyCallbackHandler`` instance).
 
 The hook cannot be unregistered, so the proxy resolves the active handler on every
 call and does nothing once ``init_assembly``'s context is shut down.
@@ -24,7 +27,7 @@ from contextvars import ContextVar
 from threading import Lock
 from typing import Any
 
-from agent_assembly.adapters.langchain.callback_handler import AssemblyCallbackHandler
+from agent_assembly.adapters.langchain.callback_handler import AssemblyCallbackHandler, consume_checked_run
 from agent_assembly.adapters.langchain.runtime import get_active_callback_handler
 
 
@@ -41,8 +44,12 @@ class ProcessGovernanceHandler(AssemblyCallbackHandler):
 
     def on_tool_start(self, serialized: dict[str, Any], input_str: str, **kwargs: Any) -> None:
         active = get_active_callback_handler()
-        if active is not None:
-            active.on_tool_start(serialized, input_str, **kwargs)
+        if active is None:
+            return
+        run_id = kwargs.get("run_id")
+        if run_id is not None and consume_checked_run(run_id) is active._interceptor:
+            return
+        active.on_tool_start(serialized, input_str, **kwargs)
 
     def on_tool_end(self, output: Any, **kwargs: Any) -> None:
         active = get_active_callback_handler()
@@ -75,6 +82,6 @@ def ensure_configure_hook_registered() -> bool:
             "agent_assembly_langchain_governance",
             default=ProcessGovernanceHandler(),  # noqa: B039
         )
-        context.register_configure_hook(var, True, AssemblyCallbackHandler)
+        context.register_configure_hook(var, True)
         _registered_var = var
         return True

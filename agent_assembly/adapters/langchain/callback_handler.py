@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import importlib
+from collections import OrderedDict
 from collections.abc import Mapping
+from threading import Lock
 from typing import Any, Literal, NoReturn, cast
 from uuid import UUID
 
@@ -17,6 +19,22 @@ from agent_assembly.core.audit_sink import (
 from agent_assembly.exceptions import ToolExecutionBlockedError
 
 _KNOWN_STATUSES: frozenset[str] = frozenset({"allow", "deny", "pending"})
+
+# run_id -> interceptor that already allowed that tool run, so the process-wide
+# configure-hook proxy (configure_hook.py) can skip a run an explicitly passed handler
+# already checked *with the active interceptor*, instead of checking it twice. Keyed by
+# interceptor so a handler built around a weaker or different one never suppresses the
+# active governance. Bounded: entries are consumed by the proxy and the oldest are
+# dropped if no proxy ever runs.
+_CHECKED_RUNS: OrderedDict[UUID, object] = OrderedDict()
+_CHECKED_RUNS_LOCK = Lock()
+_CHECKED_RUNS_MAX = 4096
+
+
+def consume_checked_run(run_id: UUID) -> object | None:
+    """Pop and return the interceptor that already allowed ``run_id``, if any."""
+    with _CHECKED_RUNS_LOCK:
+        return _CHECKED_RUNS.pop(run_id, None)
 
 
 class _FallbackBaseCallbackHandler:
@@ -202,6 +220,10 @@ class AssemblyCallbackHandler(_CallbackHandlerBase):  # type: ignore[valid-type,
                     approval_reason or reason or "Tool execution was not approved by governance.",
                 )
 
+        with _CHECKED_RUNS_LOCK:
+            _CHECKED_RUNS[run_id] = self._interceptor
+            while len(_CHECKED_RUNS) > _CHECKED_RUNS_MAX:
+                _CHECKED_RUNS.popitem(last=False)
         return None
 
     @staticmethod
