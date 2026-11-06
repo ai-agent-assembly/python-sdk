@@ -194,6 +194,8 @@ def init_assembly(
     control_plane_url: str | None = None,
     parent_agent_id: str | None = None,
     team_id: str | None = None,
+    org_id: str | None = None,
+    registration_key: str | None = None,
     delegation_reason: str | None = None,
     spawned_by_tool: str | None = None,
     depth: int | None = None,
@@ -245,6 +247,16 @@ def init_assembly(
         the agent in dry-run / sandbox mode: every action proceeds (local checks
         fail open) and the gateway records would-be violations as shadow audit
         events.
+    :param org_id: Organization this agent claims to belong to. It is a claim,
+        not an authorization (AAASM-6444): the gateway admits it only when the
+        ``registration_key`` presented with it is bound to the same
+        organization, and rejects a mismatch or an unauthenticated claim. Omit
+        it to take the organization from the key's binding. Audit entries and
+        ``GET /api/v1/logs?org_id=`` then carry that organization.
+    :param registration_key: Operator API key (``aa_...``) the gateway binds to
+        an organization. Never sent on any other route; falls back to the
+        ``AA_REGISTRATION_KEY`` environment variable on the native side. Distinct
+        from ``api_key``, which authenticates the SDK's HTTP calls.
     :param allow_insecure: Opt into a plaintext (non-TLS) native ``register``
         channel when the resolved gateway host is non-loopback (AAASM-4664).
         Defaults to ``False`` — secure-by-default (AAASM-4655): a derived
@@ -323,6 +335,8 @@ def init_assembly(
                 native_available=native_available,
                 team_id=team_id,
                 parent_agent_id=parent_agent_id,
+                org_id=org_id,
+                registration_key=registration_key,
             )
             registered_adapters, audit_sink = _register_adapters(
                 client=client,
@@ -513,6 +527,8 @@ def _register_agent_with_gateway(
     native_available: bool,
     team_id: str | None = None,
     parent_agent_id: str | None = None,
+    org_id: str | None = None,
+    registration_key: str | None = None,
 ) -> bool:
     """Register the agent with the gateway over the native gRPC ``register``.
 
@@ -559,6 +575,8 @@ def _register_agent_with_gateway(
             gateway_endpoint=gateway_endpoint,
             team_id=team_id,
             parent_agent_id=parent_agent_id,
+            org_id=org_id,
+            registration_key=registration_key,
         )
     except Exception as error:
         if _register_failure_is_fatal(mode=mode, enforcement_mode=enforcement_mode):
