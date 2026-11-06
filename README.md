@@ -177,7 +177,7 @@ with init_assembly(
 
 What this does:
 
-1. `init_assembly()` registers the agent with the gateway and auto-loads the LangChain adapter — each tool call the wrapped agent makes from now on goes through the policy gate.
+1. `init_assembly()` registers the agent with the gateway and auto-loads the LangChain adapter. The adapter registers one process-wide callback handler through `langchain_core`'s public `register_configure_hook`, so each tool call any LangChain run makes from now on — in any thread or async task — goes through the policy gate. Under `enforce` a deny raises `ToolExecutionBlockedError` before the tool body runs, and a runtime or handler failure blocks the tool too. You do not pass `callbacks` yourself; a handler you do pass is not checked twice. The gate needs `langchain-core` importable, and it stops once the `with` block (or `shutdown()`) ends.
 2. The `FakeListLLM` replays canned responses so the example runs **offline** with no real LLM.
 3. The `with` block tears down the gateway connection and unwinds adapter hooks on exit.
 
