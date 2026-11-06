@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from agent_assembly.adapters.langchain.callback_handler import AssemblyCallbackHandler
+from agent_assembly.adapters.langchain.configure_hook import ensure_configure_hook_registered
 from agent_assembly.adapters.langchain.runtime import (
     _reset_runtime_state_for_tests,
     auto_inject_callback_handler,
@@ -25,6 +26,7 @@ class LangChainPatch:
             self.interceptor,
             process_agent_id=self.process_agent_id,
         )
+        ensure_configure_hook_registered()
         return True
 
     def revert(self) -> None:

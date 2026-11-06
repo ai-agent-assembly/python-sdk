@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import importlib
+from collections import OrderedDict
 from collections.abc import Mapping
+from threading import Lock
 from typing import Any, Literal, NoReturn, cast
 from uuid import UUID
 
@@ -17,6 +19,46 @@ from agent_assembly.core.audit_sink import (
 from agent_assembly.exceptions import ToolExecutionBlockedError
 
 _KNOWN_STATUSES: frozenset[str] = frozenset({"allow", "deny", "pending"})
+
+# run_id -> interceptor that already allowed that tool run, so the process-wide
+# configure-hook proxy (configure_hook.py) can skip a run an explicitly passed handler
+# already checked *with the active interceptor*, instead of checking it twice. Keyed by
+# interceptor so a handler built around a weaker or different one never suppresses the
+# active governance. Bounded: entries are consumed by the proxy and the oldest are
+# dropped if no proxy ever runs.
+_CHECKED_RUNS: OrderedDict[UUID, object] = OrderedDict()
+# Runs the proxy skipped at start; it must skip their on_tool_end too, or the wrapped
+# interceptor would see two ends (duplicate audit / budget side effects) for one run.
+_END_SKIPPED_RUNS: OrderedDict[UUID, None] = OrderedDict()
+_CHECKED_RUNS_LOCK = Lock()
+_CHECKED_RUNS_MAX = 4096
+# Returned on a registry miss. A unique object, so a miss can never compare equal to an
+# interceptor (``None`` would, for a handler built around ``interceptor=None``).
+CHECKED_RUN_MISS: object = object()
+
+
+def _bounded_put(registry: OrderedDict[UUID, Any], run_id: UUID, value: Any) -> None:
+    registry[run_id] = value
+    while len(registry) > _CHECKED_RUNS_MAX:
+        registry.popitem(last=False)
+
+
+def consume_checked_run(run_id: UUID) -> object:
+    """Pop the interceptor that already allowed ``run_id``, or ``CHECKED_RUN_MISS``."""
+    with _CHECKED_RUNS_LOCK:
+        return _CHECKED_RUNS.pop(run_id, CHECKED_RUN_MISS)
+
+
+def mark_end_skipped(run_id: UUID) -> None:
+    """Record that the proxy skipped ``run_id``'s start, so it skips the matching end."""
+    with _CHECKED_RUNS_LOCK:
+        _bounded_put(_END_SKIPPED_RUNS, run_id, None)
+
+
+def consume_end_skipped(run_id: UUID) -> bool:
+    """Whether ``run_id``'s start was skipped; clears the mark."""
+    with _CHECKED_RUNS_LOCK:
+        return _END_SKIPPED_RUNS.pop(run_id, CHECKED_RUN_MISS) is not CHECKED_RUN_MISS
 
 
 class _FallbackBaseCallbackHandler:
@@ -202,6 +244,8 @@ class AssemblyCallbackHandler(_CallbackHandlerBase):  # type: ignore[valid-type,
                     approval_reason or reason or "Tool execution was not approved by governance.",
                 )
 
+        with _CHECKED_RUNS_LOCK:
+            _bounded_put(_CHECKED_RUNS, run_id, self._interceptor)
         return None
 
     @staticmethod

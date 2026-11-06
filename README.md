@@ -177,9 +177,17 @@ with init_assembly(
 
 What this does:
 
-1. `init_assembly()` registers the agent with the gateway and auto-loads the LangChain adapter — each tool call the wrapped agent makes from now on goes through the policy gate.
+1. `init_assembly()` registers the agent with the gateway and auto-loads the LangChain adapter. The adapter registers one process-wide callback handler through `langchain_core`'s public `register_configure_hook`, so each tool call a LangChain run makes from now on — in any thread or async task — goes through the policy gate. Under `enforce` a deny raises `ToolExecutionBlockedError` before the tool body runs, and a runtime or handler failure blocks the tool too. You do not pass `callbacks` yourself.
 2. The `FakeListLLM` replays canned responses so the example runs **offline** with no real LLM.
 3. The `with` block tears down the gateway connection and unwinds adapter hooks on exit.
+
+> **Bounds of the LangChain gate.** It is a LangChain *callback*, so it is exactly as strong as that path:
+>
+> - A tool body called directly (`tool.func(...)`, `tool._run(...)`) never goes through LangChain's callback manager and is **not** checked.
+> - It covers `langchain_core` runs only. Other frameworks are governed by their own adapters, not by this hook.
+> - It governs tool calls only. LLM-side hooks (`on_llm_start` / `on_llm_end`, prompt scanning) are **not** enabled by `init_assembly()`; they run only for an `AssemblyCallbackHandler` you pass in `callbacks` yourself.
+> - It stops governing after `shutdown()` / the end of the `with` block, and it is **never installed** if the LangChain adapter fails to register or `langchain-core` is not importable. A failed adapter registration only writes a `framework adapter 'langchain' failed to register governance hooks` warning to stderr and `init_assembly()` still returns, even under `enforce`; the tool then runs ungoverned. `ctx.registered` reports the *gateway* registration, not this. Check that the warning is absent and that `any(a.get_framework_name() == "langchain" for a in ctx.adapters)` is true.
+> - A handler you pass yourself is neither checked nor ended twice (one policy check and one `on_tool_end` per tool run) when it wraps the active interceptor, and only after it allowed the run. A handler built around a different interceptor is checked in addition, never instead.
 
 ## Public API
 
