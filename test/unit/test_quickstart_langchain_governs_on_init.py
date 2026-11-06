@@ -261,3 +261,114 @@ def test_shutdown_stops_governing_tools(init: Any, file_effect: FileSideEffect) 
     _write_tool(file_effect).invoke({"content": "after shutdown"})
 
     assert file_effect.content() == "after shutdown"
+
+
+def _count_interceptor_calls(interceptor: Any, monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
+    """Wrap the active interceptor's start check and end hook with call counters."""
+    counts = {"starts": 0, "ends": 0}
+    real_start = interceptor.check_tool_start
+    real_end = getattr(interceptor, "on_tool_end", None)
+
+    def _start(**kwargs: Any) -> Any:
+        counts["starts"] += 1
+        return real_start(**kwargs)
+
+    def _end(**kwargs: Any) -> Any:
+        counts["ends"] += 1
+        return real_end(**kwargs) if callable(real_end) else None
+
+    monkeypatch.setattr(interceptor, "check_tool_start", _start)
+    monkeypatch.setattr(interceptor, "on_tool_end", _end, raising=False)
+    return counts
+
+
+def test_explicit_handler_on_the_active_interceptor_is_checked_and_ended_once(
+    init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    context, _ = init(decision="allow")
+    adapter = next(a for a in context.adapters if isinstance(a, LangChainAdapter))
+    handler = adapter.get_callback_handler()
+    counts = _count_interceptor_calls(handler._interceptor, monkeypatch)
+
+    _write_tool(file_effect).invoke({"content": "x"}, config={"callbacks": [handler]})
+
+    assert counts == {"starts": 1, "ends": 1}
+
+
+def test_proxy_only_path_is_checked_and_ended_once(
+    init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    context, _ = init(decision="allow")
+    adapter = next(a for a in context.adapters if isinstance(a, LangChainAdapter))
+    counts = _count_interceptor_calls(adapter.get_callback_handler()._interceptor, monkeypatch)
+
+    _write_tool(file_effect).invoke({"content": "x"})
+
+    assert counts == {"starts": 1, "ends": 1}
+
+
+def test_handler_subclass_that_swallows_its_own_deny_is_rechecked_by_the_proxy(
+    init: Any, file_effect: FileSideEffect
+) -> None:
+    """A deny must not be recorded as "checked": a raise_error=False subclass swallows the block."""
+
+    class _Swallowing(AssemblyCallbackHandler):
+        raise_error = False
+
+    context, _ = init(decision="deny")
+    adapter = next(a for a in context.adapters if isinstance(a, LangChainAdapter))
+    swallowing = _Swallowing(adapter.get_callback_handler()._interceptor)
+
+    with pytest.raises(ToolExecutionBlockedError, match=_DENY_REASON):
+        _write_tool(file_effect).invoke({"content": "x"}, config={"callbacks": [swallowing]})
+
+    assert file_effect.occurred() is False
+
+
+def test_checked_run_registry_is_bounded_and_an_evicted_run_is_still_checked(
+    init: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from uuid import uuid4
+
+    from agent_assembly.adapters.langchain import callback_handler as ch
+    from agent_assembly.adapters.langchain.configure_hook import ProcessGovernanceHandler
+
+    context, _ = init(decision="allow")
+    adapter = next(a for a in context.adapters if isinstance(a, LangChainAdapter))
+    handler = adapter.get_callback_handler()
+    counts = _count_interceptor_calls(handler._interceptor, monkeypatch)
+    ch._CHECKED_RUNS.clear()
+    monkeypatch.setattr(ch, "_CHECKED_RUNS_MAX", 3)
+    run_ids = [uuid4() for _ in range(5)]
+
+    for run_id in run_ids:
+        handler.on_tool_start({"name": "t"}, "", run_id=run_id)
+
+    assert len(ch._CHECKED_RUNS) <= 3
+    assert counts["starts"] == 5
+    ProcessGovernanceHandler().on_tool_start({"name": "t"}, "", run_id=run_ids[0])  # evicted: re-checked
+    assert counts["starts"] == 6
+    ProcessGovernanceHandler().on_tool_start({"name": "t"}, "", run_id=run_ids[-1])  # still held: skipped
+    assert counts["starts"] == 6
+
+
+def test_registry_miss_never_equals_an_interceptor_even_none(init: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+    from uuid import uuid4
+
+    from agent_assembly.adapters.langchain import runtime as lc_runtime
+    from agent_assembly.adapters.langchain.callback_handler import CHECKED_RUN_MISS, consume_checked_run
+    from agent_assembly.adapters.langchain.configure_hook import ProcessGovernanceHandler
+
+    init(decision="allow")
+    assert consume_checked_run(uuid4()) is CHECKED_RUN_MISS
+    assert CHECKED_RUN_MISS is not None
+
+    bare = AssemblyCallbackHandler(None)
+    seen: list[object] = []
+    monkeypatch.setattr(bare, "on_tool_start", lambda *a, **k: seen.append(k["run_id"]))
+    monkeypatch.setattr(lc_runtime, "_ACTIVE_CALLBACK_HANDLER", bare)
+    run_id = uuid4()
+
+    ProcessGovernanceHandler().on_tool_start({"name": "t"}, "", run_id=run_id)
+
+    assert seen == [run_id]
