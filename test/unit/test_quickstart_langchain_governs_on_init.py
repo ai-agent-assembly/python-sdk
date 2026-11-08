@@ -116,12 +116,12 @@ def test_denied_tool_never_executes_with_no_explicit_callbacks(init: Any, file_e
 def test_denied_tool_never_executes_in_a_plain_thread(init: Any, file_effect: FileSideEffect) -> None:
     """A plain ``threading.Thread`` does not inherit contextvars: the gate must still hold."""
     init(decision="deny")
-    errors: list[BaseException] = []
+    errors: list[Exception] = []
 
     def _run() -> None:
         try:
             _write_tool(file_effect).invoke({"content": "denied"})
-        except BaseException as exc:  # noqa: BLE001 - captured for the assertion below
+        except Exception as exc:  # noqa: BLE001 - captured for the assertion below
             errors.append(exc)
 
     thread = threading.Thread(target=_run)
