@@ -598,7 +598,7 @@ _ALLOWED: dict[str, str] = {
         "Names what the [runtime] extra adds to the install. Packaging composition; whether that binary is actually reachable is a separate, bound claim."
     ),
     "You have three options:": ("A list lead-in with no predicate of its own."),
-    'These offline snippets also pass `enforcement_mode="observe"`, a demo posture for running without a gateway.': (
+    'These offline snippets also pass `enforcement_mode="observe"`, a demo posture for running offline against a local policy.': (
         "Names the argument the offline snippets pass and the setting they are meant for. States no behaviour of observe mode; what that mode does is documented and bound elsewhere."
     ),
     'Before you copy a snippet into a real service, remove `enforcement_mode="observe"` and `mode="sdk-only"`, and point the SDK at your gateway.': (

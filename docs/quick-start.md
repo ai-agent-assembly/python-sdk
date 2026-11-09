@@ -105,7 +105,7 @@ Every example runs **offline** in `mode="sdk-only"` against a local policy, so y
 with no API keys and no outbound network.
 
 These offline snippets also pass `enforcement_mode="observe"`, a demo posture for running
-without a gateway. Before you copy a snippet into a real service, remove
+offline against a local policy. Before you copy a snippet into a real service, remove
 `enforcement_mode="observe"` and `mode="sdk-only"`, and point the SDK at your gateway.
 
 <!-- BEGIN GENERATED: quickstart-framework-tabs -->
