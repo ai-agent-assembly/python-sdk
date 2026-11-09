@@ -42,6 +42,8 @@ class _OrgAwareRuntimeClient(FakeRuntimeClient):
         self.org_register_calls.append(
             (agent_id, name, framework, gateway_endpoint, team_id, parent_agent_id, org_id, registration_key)
         )
+        if self.register_should_raise is not None:
+            raise self.register_should_raise
         return "policy-id-001"
 
 
@@ -107,3 +109,32 @@ def test_init_assembly_never_registers_org_less_when_native_cannot_carry_the_org
     with pytest.raises(ConfigurationError, match="cannot carry org_id"):
         _init(monkeypatch, client, agent_id="acme-bot", org_id="acme", enforcement_mode="enforce")
     assert client.register_calls == []
+
+
+def test_init_assembly_treats_blank_org_and_key_as_absent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A blank value must not become an empty claim or an empty key header."""
+    client = FakeRuntimeClient(decision="allow")  # legacy 6-arg register: any org kwarg would raise TypeError
+    context = _init(monkeypatch, client, agent_id="blank", org_id="  ", registration_key="")
+    try:
+        assert client.register_calls == [("blank", "blank", "python", _GRPC_ENDPOINT, None, None)]
+    finally:
+        context.shutdown()
+
+
+def test_registration_failure_output_never_contains_the_registration_key(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """The SDK adds nothing to a failed registration's output: the key is neither
+    in the stderr warning nor in any log record, whatever the native layer raised."""
+    secret = "aa_" + "9" * 32
+    client = _OrgAwareRuntimeClient()
+    client.register_should_raise = RuntimeError("gateway rejected registration: no valid key")
+    with caplog.at_level("DEBUG"):
+        context = _init(monkeypatch, client, agent_id="leaky", org_id="acme", registration_key=secret)
+    try:
+        captured = capsys.readouterr()
+        assert "NOT registered" in captured.err  # the failure path really ran
+        assert secret not in captured.err + captured.out
+        assert secret not in caplog.text
+    finally:
+        context.shutdown()
