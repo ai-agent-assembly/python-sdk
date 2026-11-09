@@ -104,6 +104,12 @@ below is the part that wires in governance.
 Every example runs **offline** in `mode="sdk-only"` against a local policy, so you can try it
 with no API keys and no outbound network.
 
+These offline snippets also pass `enforcement_mode="observe"`, the dry-run posture: every
+action proceeds (the SDK's local checks fail open) and the gateway only records what would have
+been blocked. That suits a demo with no gateway. Before you copy a snippet into a real service,
+drop `enforcement_mode="observe"` (the default is `enforce`) and `mode="sdk-only"`, and point
+the SDK at your gateway.
+
 <!-- BEGIN GENERATED: quickstart-framework-tabs -->
 
 === "Agno"
