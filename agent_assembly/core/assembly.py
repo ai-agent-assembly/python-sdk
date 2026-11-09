@@ -293,6 +293,11 @@ def init_assembly(
             spawned_by_tool = _spawn.spawned_by_tool
 
     resolved_agent_id = _validate_agent_id(agent_id or _DEFAULT_AGENT_ID)
+    # A blank value is "not given", never an empty claim or an empty key: the native client would
+    # otherwise send an empty header that overrides AA_REGISTRATION_KEY and the gateway would
+    # refuse a registration the caller meant to leave to the environment.
+    org_id = (org_id or "").strip() or None
+    registration_key = (registration_key or "").strip() or None
 
     global _ACTIVE_CONTEXT
     with _INIT_LOCK:
