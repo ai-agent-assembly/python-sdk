@@ -12,7 +12,7 @@ on:
         description: "JSON array string of runner OSes for the test matrix. Callers pass [\"ubuntu-latest\"] for PRs and the full 4-OS list for push/scheduled/release."
         type: string
         required: false
-        default: '["ubuntu-latest", "ubuntu-22.04", "macos-latest", "macos-14"]'
+        default: '["ubuntu-latest", "ubuntu-22.04", "macos-latest", "macos-15"]'
     secrets:
       e2e_test_api_token:
         description: "Set the Slack bot token for end-to-end test."

@@ -73,7 +73,7 @@ jobs:
       operating-systems: >-
         ${{ github.event_name == 'pull_request'
             && '["ubuntu-latest"]'
-            || '["ubuntu-latest", "ubuntu-22.04", "macos-latest", "macos-14"]' }}
+            || '["ubuntu-latest", "ubuntu-22.04", "macos-latest", "macos-15"]' }}
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
