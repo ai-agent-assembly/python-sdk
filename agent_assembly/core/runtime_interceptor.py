@@ -659,6 +659,8 @@ def register_agent(
     gateway_endpoint: str | None = None,
     team_id: str | None = None,
     parent_agent_id: str | None = None,
+    org_id: str | None = None,
+    registration_key: str | None = None,
 ) -> str | None:
     """Register ``agent_id`` with the gateway over the native ``register`` call.
 
@@ -674,6 +676,14 @@ def register_agent(
     is retried with the legacy positional signature so the SDK keeps working
     rather than raising.
 
+    ``org_id`` is a *claim*: the gateway admits it only when ``registration_key``
+    (an operator API key bound to that organization) is presented with it, and
+    derives the organization from the key when ``org_id`` is omitted
+    (AAASM-6444). Unlike ``team_id`` these are never silently dropped: a native
+    build that cannot carry them raises instead of registering the agent
+    org-less, because an agent the caller believes is org-scoped but is not
+    would write its audit entries outside that organization.
+
     Returns the policy id the gateway assigned, or ``None`` when ``register`` is
     not exposed (older native build). Registration is authoritative: a native
     failure raises ``RuntimeError`` and is allowed to propagate so init surfaces
@@ -682,6 +692,25 @@ def register_agent(
     register = getattr(runtime_client, "register", None)
     if register is None:
         return None
+    if org_id is not None or registration_key is not None:
+        try:
+            return str(
+                register(
+                    agent_id,
+                    agent_id,
+                    framework,
+                    gateway_endpoint,
+                    team_id,
+                    parent_agent_id,
+                    org_id,
+                    registration_key,
+                )
+            )
+        except TypeError as error:
+            raise RuntimeError(
+                "this native agent_assembly._core build cannot carry org_id/registration_key; "
+                "upgrade the SDK instead of registering the agent without its organization"
+            ) from error
     try:
         return str(register(agent_id, agent_id, framework, gateway_endpoint, team_id, parent_agent_id))
     except TypeError:

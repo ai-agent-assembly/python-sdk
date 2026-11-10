@@ -598,6 +598,12 @@ _ALLOWED: dict[str, str] = {
         "Names what the [runtime] extra adds to the install. Packaging composition; whether that binary is actually reachable is a separate, bound claim."
     ),
     "You have three options:": ("A list lead-in with no predicate of its own."),
+    'These offline snippets also pass `enforcement_mode="observe"`, a demo posture for running offline against a local policy.': (
+        "Names the argument the offline snippets pass and the setting they are meant for. States no behaviour of observe mode; what that mode does is documented and bound elsewhere."
+    ),
+    'Before you copy a snippet into a real service, remove `enforcement_mode="observe"` and `mode="sdk-only"`, and point the SDK at your gateway.': (
+        "An instruction to change two demo arguments and add a gateway endpoint when moving off the offline setup. An imperative about configuration, with no claim about what the SDK or gateway then does."
+    ),
     "**Let the SDK auto-start one.**": (
         "The bold label of a bullet. The behavioural claim it introduces is the next sentence, which is bound and registered unproven."
     ),
