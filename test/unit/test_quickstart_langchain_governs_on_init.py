@@ -391,15 +391,25 @@ def test_runtime_failure_during_the_policy_query_blocks_the_tool(
     assert file_effect.occurred() is False
 
 
-def test_registering_the_hook_twice_checks_each_tool_call_once(init: Any, file_effect: FileSideEffect) -> None:
-    from agent_assembly.adapters.langchain.configure_hook import ensure_configure_hook_registered
+def test_registering_the_hook_twice_registers_with_langchain_once(
+    init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from langchain_core.tracers import context as lc_context
+
+    from agent_assembly.adapters.langchain import configure_hook
 
     _, runtime = init(decision="allow")
+    registered = configure_hook._registered_var
+    registrations: list[object] = []
+    monkeypatch.setattr(lc_context, "register_configure_hook", lambda *a, **k: registrations.append(a))
 
-    assert ensure_configure_hook_registered() is True
-    assert ensure_configure_hook_registered() is True
+    assert configure_hook.ensure_configure_hook_registered() is True
+    assert configure_hook.ensure_configure_hook_registered() is True
     _write_tool(file_effect).invoke({"content": "once"})
 
+    assert registered is not None
+    assert configure_hook._registered_var is registered
+    assert registrations == []
     assert [call[2] for call in runtime.query_calls] == ["write_to_disk"]
 
 
