@@ -14,14 +14,13 @@ crate-type = ["cdylib"]
 # aa-proto, and aa-sdk-client must share one SHA so cargo resolves a single
 # checkout of the agent-assembly workspace.
 #
-# Pinned to agent-assembly AAASM-5835's merge commit, which fixes
-# AssemblyClient::query_policy sending the caller's un-normalized human label
-# instead of the registered did:key DID (every governed tool call failed with
-# a spurious "credential token registered to a different agent" error).
-# AAASM-5839.
-aa-core = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-core", features = ["serde"] }
-aa-proto = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-proto" }
-aa-sdk-client = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "0044d515d020863767d8011e18e266ec37344e5c", package = "aa-sdk-client" }
+# Pinned to the agent-assembly merge commit of AAASM-6451 (main d4093e89b). It carries
+# AAASM-6447/6451: `AssemblyConfig::org_id` and `registration_key` (the org claim and the
+# operator key the gateway binds it to) and the gateway-restart re-bind, and it keeps the
+# AAASM-5839 fix (query_policy sends the registered did:key DID, not the human label).
+aa-core = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "d4093e89b07d8ba1c38e6caa92637d2e8edb65d7", package = "aa-core", features = ["serde"] }
+aa-proto = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "d4093e89b07d8ba1c38e6caa92637d2e8edb65d7", package = "aa-proto" }
+aa-sdk-client = { git = "https://github.com/ai-agent-assembly/agent-assembly.git", rev = "d4093e89b07d8ba1c38e6caa92637d2e8edb65d7", package = "aa-sdk-client" }
 prost = "0.14"
 pyo3 = { version = "0.29", features = ["extension-module"] }
 serde = { version = "1.0", features = ["derive"] }

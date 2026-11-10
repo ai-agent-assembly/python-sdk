@@ -108,6 +108,8 @@ impl RuntimeClient {
             // AASM_STATE_DIR / ~/.aasm/identity, matching this shim's pre-AAASM-5332
             // ambient-resolution behavior (AAASM-5839).
             identity_dir: None,
+            org_id: None,
+            registration_key: None,
         };
         let handle = spawn_ipc_thread(
             config.resolve_socket_path(),
@@ -141,6 +143,10 @@ impl RuntimeClient {
     /// team-budget attribution and `parent_agent_id` the topology graph. Both
     /// are optional — `None` leaves the agent team-unscoped / root.
     ///
+    /// `org_id` is a claim and `registration_key` the operator API key the
+    /// gateway binds to an organization (AAASM-6444); see
+    /// [`aa_sdk_client::AssemblyConfig::org_id`].
+    ///
     /// Raises `RuntimeError` when the gateway is unreachable or rejects the
     /// registration — unlike `query_policy`, registration is not advisory, so a
     /// failure surfaces rather than failing open.
@@ -148,7 +154,7 @@ impl RuntimeClient {
     // boundary; bundling them into a struct would force callers to build one in
     // Python, complicating the call site for no benefit.
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (agent_id, name, framework, gateway_endpoint=None, team_id=None, parent_agent_id=None))]
+    #[pyo3(signature = (agent_id, name, framework, gateway_endpoint=None, team_id=None, parent_agent_id=None, org_id=None, registration_key=None))]
     fn register(
         &self,
         py: Python<'_>,
@@ -158,6 +164,8 @@ impl RuntimeClient {
         gateway_endpoint: Option<String>,
         team_id: Option<String>,
         parent_agent_id: Option<String>,
+        org_id: Option<String>,
+        registration_key: Option<String>,
     ) -> PyResult<String> {
         let config = AssemblyConfig {
             agent_id,
@@ -170,6 +178,10 @@ impl RuntimeClient {
             sdk_version: None,
             // See the `connect` config above (AAASM-5839).
             identity_dir: None,
+            // AAASM-6444: the org is a claim the gateway validates against the
+            // key; both are optional and absent means an org-less registration.
+            org_id,
+            registration_key: registration_key.map(aa_sdk_client::RegistrationKey::new),
         };
         // `register` is async (tonic). Release the GIL and drive the future on a
         // private current-thread runtime so the blocking gRPC round-trip never
