@@ -9,7 +9,7 @@ on:
         required: false
         default: false
       operating-systems:
-        description: "JSON array string of runner OSes for the test matrix. Callers pass [\"ubuntu-latest\"] for PRs and the full 4-OS list for push/scheduled/release."
+        description: "JSON array string of runner OSes for the test matrix. Callers pass [\"ubuntu-latest\"] for PRs and the full 3-OS list for push/scheduled/release."
         type: string
         required: false
         default: '["ubuntu-latest", "ubuntu-22.04", "macos-latest"]'
