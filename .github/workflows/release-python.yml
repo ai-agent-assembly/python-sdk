@@ -413,7 +413,7 @@ jobs:
   build-macos-arm64:
     name: Build macosx_arm64 wheel
     needs: resolve
-    runs-on: macos-14  # Apple silicon runner
+    runs-on: macos-15  # Apple silicon runner (macos-14 retired 2026-11-02, AAASM-6459)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
       - name: Expand interpreter list for setup-python
