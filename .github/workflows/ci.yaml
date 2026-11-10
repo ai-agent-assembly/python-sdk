@@ -69,11 +69,11 @@ jobs:
 #    name: Run all tests and organize all test reports
     uses: ./.github/workflows/rw_run_all_test_and_record.yaml
     with:
-      # PRs run ubuntu-only to trim the 4-OS matrix; push/scheduled/release keep the full list.
+      # PRs run ubuntu-only to trim the 3-OS matrix (macos-14 dropped: GitHub reports "macos-14-arm64-us-default is not supported", AAASM-6458); push/scheduled/release keep the full list.
       operating-systems: >-
         ${{ github.event_name == 'pull_request'
             && '["ubuntu-latest"]'
-            || '["ubuntu-latest", "ubuntu-22.04", "macos-latest", "macos-14"]' }}
+            || '["ubuntu-latest", "ubuntu-22.04", "macos-latest"]' }}
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
       sonar_token: ${{ secrets.SONAR_TOKEN }}
