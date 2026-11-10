@@ -183,7 +183,7 @@ jobs:
         # JSON BOM of every installed distribution.
         run: uvx --from cyclonedx-bom==7.3.0 cyclonedx-py environment .venv --output-format JSON --output-file sbom.cdx.json
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: sbom
           path: sbom.cdx.json
@@ -217,7 +217,7 @@ jobs:
           command: sdist
           args: --out dist
       - name: Upload sdist artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: wheels-sdist
           path: dist/*.tar.gz
@@ -318,7 +318,7 @@ jobs:
             unzip -o /tmp/protoc.zip -d /usr/local >/dev/null
             protoc --version
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: wheels-linux-x86_64
           path: dist/*.whl
@@ -405,7 +405,7 @@ jobs:
             unzip -o /tmp/protoc.zip -d /usr/local >/dev/null
             protoc --version
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: wheels-linux-aarch64
           path: dist/*.whl
@@ -492,7 +492,7 @@ jobs:
           # setup-python step above (macOS has no manylinux image).
           args: --release --out dist --interpreter ${{ env.PYTHON_INTERPRETERS }}
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: wheels-macos-arm64
           path: dist/*.whl
@@ -579,7 +579,7 @@ jobs:
           # setup-python step above (macOS has no manylinux image).
           args: --release --out dist --interpreter ${{ env.PYTHON_INTERPRETERS }}
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: wheels-macos-x86_64
           path: dist/*.whl
@@ -726,7 +726,7 @@ jobs:
           printf '%s\n' "${RELEASE_TAG}" > release-tag.txt
           echo "Recorded release tag: ${RELEASE_TAG}"
       - name: Upload release-tag artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7
         with:
           name: release-tag
           path: release-tag.txt
