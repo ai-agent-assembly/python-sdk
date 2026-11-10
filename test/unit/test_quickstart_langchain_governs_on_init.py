@@ -372,3 +372,48 @@ def test_registry_miss_never_equals_an_interceptor_even_none(init: Any, monkeypa
     ProcessGovernanceHandler().on_tool_start({"name": "t"}, "", run_id=run_id)
 
     assert seen == [run_id]
+
+
+def test_runtime_failure_during_the_policy_query_blocks_the_tool(
+    init: Any, file_effect: FileSideEffect, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A runtime/gateway that cannot answer must not turn into an allow (enforce mode fails closed)."""
+    _, runtime = init(decision="allow")
+
+    def _unreachable(*_args: Any, **_kwargs: Any) -> dict[str, str]:
+        raise ConnectionError("runtime socket unreachable")
+
+    monkeypatch.setattr(runtime, "query_policy", _unreachable)
+
+    with pytest.raises(ToolExecutionBlockedError, match="runtime query failed"):
+        _write_tool(file_effect).invoke({"content": "must not run"})
+
+    assert file_effect.occurred() is False
+
+
+def test_registering_the_hook_twice_checks_each_tool_call_once(init: Any, file_effect: FileSideEffect) -> None:
+    from agent_assembly.adapters.langchain.configure_hook import ensure_configure_hook_registered
+
+    _, runtime = init(decision="allow")
+
+    assert ensure_configure_hook_registered() is True
+    assert ensure_configure_hook_registered() is True
+    _write_tool(file_effect).invoke({"content": "once"})
+
+    assert [call[2] for call in runtime.query_calls] == ["write_to_disk"]
+
+
+def test_missing_langchain_core_leaves_the_hook_unregistered(monkeypatch: pytest.MonkeyPatch) -> None:
+    import importlib
+
+    from agent_assembly.adapters.langchain import configure_hook
+
+    monkeypatch.setattr(configure_hook, "_registered_var", None)
+
+    def _no_langchain(name: str, *args: Any, **kwargs: Any) -> Any:
+        raise ImportError(name)
+
+    monkeypatch.setattr(importlib, "import_module", _no_langchain)
+
+    assert configure_hook.ensure_configure_hook_registered() is False
+    assert configure_hook._registered_var is None
