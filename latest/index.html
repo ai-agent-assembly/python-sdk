@@ -2614,8 +2614,9 @@ platform. For the product overview, the gateway, and the policy model, see the c
 <h2 id="what-it-wraps">What it wraps<a class="headerlink" href="#what-it-wraps" title="Permanent link">&para;</a></h2>
 <p>The SDK does not replace your agent framework — it <strong>intercepts</strong> it. When you call
 <code>init_assembly()</code>, the SDK detects which supported framework is importable in your process
-and monkey-patches that framework's tool-call entry points so each call passes through a
-policy gate first. Today it ships adapters for <strong>LangChain, LangGraph, CrewAI, OpenAI Agents,
+and hooks that framework's tool-call entry points so each call passes through a
+policy gate first (LangChain through its public <code>register_configure_hook</code> callback extension point,
+the other adapters by patching the framework). The LangChain gate is a callback, so a tool body called directly (<code>tool.func(...)</code>) is not checked, LLM-side hooks are not enabled by <code>init_assembly()</code>, and if the adapter fails to register (a stderr warning, init still succeeds) LangChain runs ungoverned — see the README Quick Start for the full list of bounds. Today it ships adapters for <strong>LangChain, LangGraph, CrewAI, OpenAI Agents,
 Pydantic AI, Google ADK, and MCP servers</strong>.</p>
 <pre class="mermaid"><code>flowchart LR
     Agent["Your agent&lt;br/&gt;(LangChain / CrewAI / …)"]
@@ -2743,7 +2744,7 @@ and <strong>latest</strong> (the head of <code>master</code>). Older versions re
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="August 15, 2026 18:56:43 CST"><span class="timeago" datetime="2026-08-15T18:56:43+08:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="August 15, 2026 18:56:43 CST">2026-08-15</span> by Bryant</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 6, 2026 09:31:05 CST"><span class="timeago" datetime="2026-11-06T09:31:05+08:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 6, 2026 09:31:05 CST">2026-11-06</span> by Bryant</span>
 
     
     
